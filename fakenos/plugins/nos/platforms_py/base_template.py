@@ -19,6 +19,7 @@ class BaseDevice(ABC):
         self.env = Environment(
             loader=PackageLoader("fakenos.plugins.nos.platforms_py", "templates"),
             autoescape=select_autoescape(["j2"]),
+            trim_blocks=False, lstrip_blocks=False
         )
 
     def load_configurations(self, configuration_file: str) -> dict:

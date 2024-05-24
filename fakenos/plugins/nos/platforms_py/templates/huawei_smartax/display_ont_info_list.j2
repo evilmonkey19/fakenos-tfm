@@ -1,0 +1,16 @@
+  -----------------------------------------------------------------------------
+  F/S/P   ONT         SN         Control     Run      Config   Match    Protect
+          ID                     flag        state    state    state    side
+  -----------------------------------------------------------------------------
+  {% for ont in onts -%}
+  {{ ont.f_s_p }} {{ ont.ont_id }}  {{ ont.sn }}  {{ ont.control_flag }} {{ ont.run_state }}  {{ ont.config_state }}  {{ ont.match_state }} {{ ont.protect_side }}
+  {% endfor -%}
+  -----------------------------------------------------------------------------
+  F/S/P   ONT-ID   Description
+  -----------------------------------------------------------------------------
+  {% for ont in onts -%}
+  {{ ont.f_s_p }} {{ ont["ont-id"] }}   {{ ont.description }}
+  {% endfor -%}
+  -----------------------------------------------------------------------------
+  In port {{ port }}, the total number of ONTs is: {{ onts|length }}, online: {{ onts|selectattr('run_state', 'equalto', 'online ')|list|length }}, offline: {{ onts|selectattr('run_state', 'equalto', 'offline')|list|length }}
+  -----------------------------------------------------------------------------
