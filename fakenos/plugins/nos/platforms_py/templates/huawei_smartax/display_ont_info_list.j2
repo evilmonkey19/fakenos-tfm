@@ -12,5 +12,5 @@
   {{ ont.f_s_p }} {{ ont["ont-id"] }}   {{ ont.description }}
   {% endfor -%}
   -----------------------------------------------------------------------------
-  In port {{ port }}, the total number of ONTs is: {{ onts|length }}, online: {{ onts|selectattr('run_state', 'equalto', 'online ')|list|length }}, offline: {{ onts|selectattr('run_state', 'equalto', 'offline')|list|length }}
+  In port {{ port }}, the total number of ONTs are: {{ onts|length }}, online: {{ onts|selectattr('run_state', 'equalto', 'online ')|list|length }}, offline: {{ onts|selectattr('run_state', 'equalto', 'offline')|list|length }}
   -----------------------------------------------------------------------------

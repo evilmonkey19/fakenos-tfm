@@ -2,6 +2,7 @@
 NOS module for Arista EOS
 """
 
+import os
 import time
 
 from fakenos.plugins.nos.platforms_py.base_template import BaseDevice
@@ -12,7 +13,8 @@ ENABLE_PROMPT: str = "{base_prompt}#"
 CONFIG_PROMPT: str = "{base_prompt}(config)#"
 DEVICE_NAME: str = "AristaEOS"
 
-DEFAULT_CONFIGURATION: str = "fakenos/plugins/nos/platforms_py/configurations/arista_eos.yaml.j2"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_CONFIGURATION = os.path.join(BASE_DIR, "configurations/arista_eos.yaml.j2")
 
 
 # pylint: disable=unused-argument

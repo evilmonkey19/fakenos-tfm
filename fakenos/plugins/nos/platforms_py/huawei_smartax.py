@@ -6,6 +6,7 @@ NOS module for Huawei SmartAX
 # import os
 import copy
 
+import os
 from typing import Dict, List
 from fakenos.plugins.nos.platforms_py.base_template import BaseDevice
 
@@ -16,8 +17,9 @@ ENABLE_PROMPT: str = "{base_prompt}#"
 CONFIG_PROMPT: str = "{base_prompt}(config)#"
 DEVICE_NAME: str = "HuaweiSmartAX"
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_CONFIGURATION = os.path.join(BASE_DIR, "configurations/huawei_smartax.yaml.j2")
 
-DEFAULT_CONFIGURATION: str = "fakenos/plugins/nos/platforms_py/configurations/huawei_smartax.yaml.j2"
 
 # Huawei when doing tables use predefined spacing.
 # The spacing corresponds to the largest possible value in the column
@@ -165,5 +167,10 @@ commands = {
         "output": HuaweiSmartAX.make_display_onts,
         "help": "display ont information",
         "prompt": [INITIAL_PROMPT, ENABLE_PROMPT],
+    },
+    "quit": {
+        "output": True,
+        "help": "Exit the current level of the CLI",
+        "prompt": [INITIAL_PROMPT, ENABLE_PROMPT, CONFIG_PROMPT],
     },
 }
