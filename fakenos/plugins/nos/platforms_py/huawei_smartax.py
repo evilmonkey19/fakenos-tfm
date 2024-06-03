@@ -28,7 +28,7 @@ DEFAULT_CONFIGURATION = os.path.join(BASE_DIR, "configurations/huawei_smartax.ya
 # Example:
 # F/S/P: 0/ 1/11 (value is larger)
 # ONT ID: 0 (title is larger)
-SPACING: Dict[str, int] = {
+FRAME_SPACING: Dict[str, int] = {
     "SlotID": ("left", len(max("SlotID", "0", "1", "2", "3", "4", "5", key=len))),
     "BoardName": ("left", len(max("BoardName", "A123ABCD", key=len))),
     "Status": ("left", len(max("Status", "Normal", "Active_normal", "Standby_failed", key=len))),
@@ -45,21 +45,28 @@ SPACING: Dict[str, int] = {
     "Match state": ("left", len(max("match", "state", "initial", "match", "mismatch", key=len))),
     "Protect side": ("left", len(max("protect", "side", "yes", "no", key=len))),
     "Description": ("left", len(max("description", "Generic_description", "The acoustic explanation slaps.", key=len))),
+    "Network service": ("left", len(max("network service", "dhcpv6-relay", key=len))),
+}
+
+SERVICES_SPACING: Dict[str, int] = {
+    "Network service": ("left", len(max("Network service", "dhcpv6-relay", key=len))),
+    "Port": ("left", len(max("Port", "4294967295", key=len))),
+    "State": ("left", len(max("State", "disable", "enable", key=len))),
 }
 
 class HuaweiSmartAX(BaseDevice):
     """
     Class that keeps track of the state of the Huawei SmartAX device.
     """
-    def _add_whitespaces_column(self, column: List[str]):
+    def _add_whitespaces_column(self, column: List[str], spacing: Dict[str, int] = None):
         """
         Add whitespacing to a column depending on the
         largest element in the column.
         """
-        max_length = SPACING[column[0]][1]
-        if SPACING[column[0]][0] == "right":
+        max_length = spacing[column[0]][1]
+        if spacing[column[0]][0] == "right":
             return [str(row).rjust(max_length) for row in column]
-        if SPACING[column[0]][0] == "center":
+        if spacing[column[0]][0] == "center":
             return [str(row).center(max_length) for row in column]
         return [str(row).ljust(max_length) for row in column]
 
@@ -93,7 +100,7 @@ class HuaweiSmartAX(BaseDevice):
         boards = [*copy.deepcopy(self.configurations["frames"][0]["slots"])]
         for title, keyword in titles.items():
             board_column = [board[keyword] for board in boards]
-            results = self._add_whitespaces_column([title] + board_column)
+            results = self._add_whitespaces_column([title] + board_column, FRAME_SPACING)
             board_column = results[1:]
             titles[title] = results[0]
             for board in boards:
@@ -136,19 +143,33 @@ class HuaweiSmartAX(BaseDevice):
             ont["ont-id"] = ont["ont_id"]
         for title, keyword in titles_table_1.items():
             onts_column = [ont[keyword] for ont in onts]
-            results = self._add_whitespaces_column([title] + onts_column)
+            results = self._add_whitespaces_column([title] + onts_column, FRAME_SPACING)
             onts_column = results[1:]
             titles_table_1[title] = results[0]
             for ont in onts:
                 ont[keyword] = onts_column[onts.index(ont)]
         for title, keyword in titles_table_2.items():
             onts_column = [ont[keyword] for ont in onts]
-            results = self._add_whitespaces_column([title] + onts_column)
+            results = self._add_whitespaces_column([title] + onts_column, FRAME_SPACING)
             onts_column = results[1:]
             titles_table_2[title] = results[0]
             for ont in onts:
                 ont[keyword] = onts_column[onts.index(ont)]
         return self.render("huawei_smartax/display_ont_info_list.j2", port=port, onts=onts)
+
+    def make_display_sysman_service_state(self, base_prompt, current_prompt, command):
+        """ Return the sysman service state information """
+        services = copy.deepcopy(self.configurations["services"])
+        titles = ["Network service", "Port", "State"]
+        titles: dict = {title:keyword for title, keyword in zip(titles, self._get_keywords(titles))}
+        for title, keyword in titles.items():
+            services_column = [service[keyword] if service[keyword] is not None else "----" for service in services]
+            results = self._add_whitespaces_column([title] + services_column, SERVICES_SPACING)
+            services_column = results[1:]
+            titles[title] = results[0]
+            for service in services:
+                service[keyword] = services_column[services.index(service)]
+        return self.render("huawei_smartax/display_sysman_service_state.j2", titles=list(titles.values()), services=services)
 
 
 commands = {
@@ -166,6 +187,11 @@ commands = {
     "display ont info 0/2/0": {
         "output": HuaweiSmartAX.make_display_onts,
         "help": "display ont information",
+        "prompt": [INITIAL_PROMPT, ENABLE_PROMPT],
+    },
+    "display sysman service state": {
+        "output": HuaweiSmartAX.make_display_sysman_service_state,
+        "help": "It shows the state of the running services",
         "prompt": [INITIAL_PROMPT, ENABLE_PROMPT],
     },
     "quit": {
