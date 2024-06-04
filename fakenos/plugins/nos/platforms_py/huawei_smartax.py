@@ -7,6 +7,7 @@ NOS module for Huawei SmartAX
 import copy
 
 import os
+import re
 from typing import Dict, List
 from fakenos.plugins.nos.platforms_py.base_template import BaseDevice
 
@@ -117,7 +118,7 @@ class HuaweiSmartAX(BaseDevice):
                 board[keyword] = board_column[boards.index(board)]
         return self.render("huawei_smartax/display_board.j2", titles=titles.values(), boards=boards)
 
-    def make_display_onts(self, base_prompt, current_prompt, command):
+    def make_display_onts(self, **kwargs):
         """ Return the ONTs information 
         
         Example:
@@ -139,15 +140,22 @@ class HuaweiSmartAX(BaseDevice):
             In port 0/ 1/0 , the total of ONTs are: 3, online: 3
             -----------------------------------------------------------------------------
         """
+        if not isinstance(kwargs['args'], str) or not re.match(r"\d+/\d+/\d+", kwargs['args']):
+            return "Please provide the port number correctly."
+        
+
+        frame_index, board_index, port_index = (int(value) for value in kwargs['args'].split("/"))
+        
         titles_table_1 = ["F/S/P", "ONT ID", "SN", "Control flag", "Run state", "Config state", "Match state", "Protect side"]
         titles_table_2 = ["F/S/P", "ONT-ID", "Description"]
         titles_table_1 = {title:keyword for title, keyword in zip(titles_table_1, self._get_keywords(titles_table_1))}
         titles_table_2 = {title:keyword for title, keyword in zip(titles_table_2, self._get_keywords(titles_table_2))}
-        frame = copy.deepcopy(self.configurations["frames"][0])
-        board = next((board for board in frame["slots"] if board["boardname"] == "H901GPSFE"), None)
-        position = frame["slots"].index(board) if board else None
-        onts = board["ports"][0]
-        port = f"0/ {position}/0"
+        frame = copy.deepcopy(self.configurations["frames"][frame_index])
+        if frame['slots'][board_index]['boardname'] != "H901GPSFE":
+            return "The board is not a H901GPSFE board."
+        board = frame['slots'][board_index]
+        onts = board["ports"][port_index]
+        port = f"{frame_index}/ {board_index}/{port_index}"
         for ont in onts:
             ont["f_s_p"] = port
             ont["ont-id"] = ont["ont_id"]
@@ -222,8 +230,9 @@ commands = {
         "help": "display board information",
         "prompt": [INITIAL_PROMPT, ENABLE_PROMPT],
     },
-    "display ont info 0/2/0": {
+    "display ont info": {
         "output": HuaweiSmartAX.make_display_onts,
+        "regex": "di[[splay]] ont inf[[o]] \\S+",  # display ont info 0/2/0
         "help": "display ont information",
         "prompt": [INITIAL_PROMPT, ENABLE_PROMPT],
     },

@@ -7,7 +7,8 @@ import logging
 import traceback
 import copy
 import os
-from typing import List, Union
+from typing import List, Tuple, Union
+import re
 
 from fakenos.core.nos import Nos
 from fakenos.plugins import nos
@@ -61,12 +62,22 @@ class CMDShell(Cmd):
             **copy.deepcopy(nos.commands or {}),
             **copy.deepcopy(nos_inventory_config.get("commands", {})),
         }
+        self.regexes_to_command = self._get_regexes_to_command()
+
         # call the base constructor of cmd.Cmd, with our own stdin and stdout
         super().__init__(
             completekey=completekey,
             stdin=stdin,
             stdout=stdout,
         )
+
+    def _get_regexes_to_command(self):
+        """Method to get regexes to command"""
+        regexes = {
+            value['regex']: key for key, value in self.commands.items() if "regex" in value
+        }
+        regexes = {regex.replace("[", "(").replace("]", ")?"): value for regex, value in regexes.items()}
+        return {re.compile(regex): value for regex, value in regexes.items()}
 
     def start(self):
         """Method to start the shell"""
@@ -89,6 +100,7 @@ class CMDShell(Cmd):
         for file in changed_files:
             self.nos.from_file(file)
             self.commands.update(self.nos.commands)
+            self.regexes_to_command.update(self._get_regexes_to_command())
 
     def precmd(self, line):
         """Method to return line before processing the command"""
@@ -139,13 +151,27 @@ class CMDShell(Cmd):
             return self.prompt == prompt_.format(base_prompt=self.base_prompt)
         return any(self.prompt == i.format(base_prompt=self.base_prompt) for i in prompt_)
 
+    def get_match_command_and_args(self, line: str) -> Union[Tuple[str, List], Tuple[None, None]]:
+        """ Method that checks if the line matches any regex """
+        for regex, cmd in self.regexes_to_command.items():
+            found = regex.search(line)
+            if not found:
+                continue
+            base_command = found.group(0)
+            args = line.replace(cmd, "").strip()
+            if base_command:
+                return cmd, args
+        return None, None
+
     def get_command_response(self, line):
         """ Method that handles the execution and response of the command """
         response = self.commands["_default_"]["output"]
         try:
-            cmd_data = self.commands[line]
-            if "alias" in cmd_data:
-                cmd_data = {**self.commands[cmd_data.pop("alias")], **cmd_data}
+            base_command, args = self.get_match_command_and_args(line)
+            if base_command is None:
+                base_command = line
+            cmd_data = self.commands[base_command]
+            cmd_data = {**self.commands[cmd_data.pop("alias")], **cmd_data} if 'alias' in cmd_data else cmd_data
             if not self._check_prompt(cmd_data.get("prompt")):
                 log.warning(
                     "'%s' command prompt '%s' not matching current prompt '%s'",
@@ -160,11 +186,13 @@ class CMDShell(Cmd):
                 return response
             response = cmd_data["output"]
             if callable(response):
+
                 response = response(
                     self.nos.device,
                     base_prompt=self.base_prompt,
                     current_prompt=self.prompt,
-                    command=line,
+                    command=base_command,
+                    args=args,
                 )
                 if isinstance(response, dict):
                     if "new_prompt" in response:
