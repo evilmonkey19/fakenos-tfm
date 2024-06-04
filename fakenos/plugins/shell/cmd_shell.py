@@ -139,32 +139,14 @@ class CMDShell(Cmd):
             return self.prompt == prompt_.format(base_prompt=self.base_prompt)
         return any(self.prompt == i.format(base_prompt=self.base_prompt) for i in prompt_)
 
-    # pylint: disable=too-many-branches
-    def default(self, line):
-        """Method called if no do_xyz methods found"""
-        log.debug("shell.default '%s' running command '%s'", self.base_prompt, [line])
-        ret = self.commands["_default_"]["output"]
+    def get_command_response(self, line):
+        """ Method that handles the execution and response of the command """
+        response = self.commands["_default_"]["output"]
         try:
             cmd_data = self.commands[line]
             if "alias" in cmd_data:
                 cmd_data = {**self.commands[cmd_data.pop("alias")], **cmd_data}
-            if self._check_prompt(cmd_data.get("prompt")):
-                ret = cmd_data["output"]
-                if callable(ret):
-                    ret = ret(
-                        self.nos.device,
-                        base_prompt=self.base_prompt,
-                        current_prompt=self.prompt,
-                        command=line,
-                    )
-                    if isinstance(ret, dict):
-                        if "new_prompt" in ret:
-                            self.prompt = ret["new_prompt"].format(base_prompt=self.base_prompt)
-                        ret = ret["output"]
-                if "new_prompt" in cmd_data:
-                    self.prompt = cmd_data["new_prompt"].format(base_prompt=self.base_prompt)
-            else:
-
+            if not self._check_prompt(cmd_data.get("prompt")):
                 log.warning(
                     "'%s' command prompt '%s' not matching current prompt '%s'",
                     line,
@@ -175,25 +157,50 @@ class CMDShell(Cmd):
                     ),
                     self.prompt,
                 )
+                return response
+            response = cmd_data["output"]
+            if callable(response):
+                response = response(
+                    self.nos.device,
+                    base_prompt=self.base_prompt,
+                    current_prompt=self.prompt,
+                    command=line,
+                )
+                if isinstance(response, dict):
+                    if "new_prompt" in response:
+                        self.prompt = response["new_prompt"].format(base_prompt=self.base_prompt)
+                    response = response["output"]
+            if "new_prompt" in cmd_data:
+                self.prompt = cmd_data["new_prompt"].format(base_prompt=self.base_prompt)
         except KeyError:
             log.error("shell.default '%s' command '%s' not found", self.base_prompt, [line])
-            if callable(ret):
-                ret = "An error occurred related to the command function"
+            if callable(response):
+                response = "An error occurred related to the command function"
         # pylint: disable=broad-except
         except ValueError:
             log.error("Output is still a callable")
-            ret = "An error occurred"
+            response = "An error occurred"
         except (Exception,) as e:
             log.error("An error occurred: %s", str(e))
-            ret = traceback.format_exc()
-            ret = ret.replace("\n", self.newline)
-        # check if need to exit
-        if ret is True or not self.is_running.is_set():
+            response = traceback.format_exc()
+            response = response.replace("\n", self.newline)
+        return response
+    
+    def send_response(self, response):
+        """ Method to send the response correctly. """
+        try:
+            final_response = response.format(base_prompt=self.base_prompt)
+        except KeyError:
+            log.error("Error in formatting output")
+        self.writeline(final_response)
+
+    def default(self, line):
+        """Method called if no do_xyz methods found"""
+        log.debug("shell.default '%s' running command '%s'", self.base_prompt, [line])
+        response = self.get_command_response(line)
+        if response is True and self.is_running.is_set():
+            # We exit the terminal
             return True
-        if ret is not None:
-            try:
-                ret = ret.format(base_prompt=self.base_prompt)
-            except KeyError:
-                log.error("Error in formatting output")
-            self.writeline(ret)
+        if response is not None:
+            self.send_response(response)
         return False
