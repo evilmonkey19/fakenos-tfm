@@ -653,7 +653,7 @@ services:
     port: 4737
     state: enable
   - network_service: twamp
-    port: 4294967295
+    port: 862
     state: enable
   - network_service: netconf
     port: 830
@@ -675,4 +675,165 @@ services:
     state: disable
   - network_service: capwap
     port: 5246
+    state: enable
+  - network_service: mqtt
+    port: 8883
     state: disable
+
+dba_profiles:
+  - profile_id: 0
+    profile_name: "dba-profile_0"
+    type: 3
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 0
+    assure_kbps: 8192
+    max_kbps: 20480
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    bind_times: 1
+  - profile_id: 1
+    profile_name: "dba-profile_1"
+    type: 1
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 5120
+    assure_kbps: 0
+    max_kbps: 0
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    bind_times: 3
+  - profile_id: 2
+    profile_name: "dba-profile_2"
+    type: 1
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 1024
+    assure_kbps: 0
+    max_kbps: 0
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    bind_times: 0
+  - profile_id: 3
+    profile_name: "dba-profile_3"
+    type: 4
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 0
+    assure_kbps: 0
+    max_kbps: 32768
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    bind_times: 0
+  - profile_id: 4
+    profile_name: "dba-profile_4"
+    type: 1
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 1024000
+    assure_kbps: 0
+    max_kbps: 0
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    bind_times: 0
+  - profile_id: 5
+    profile_name: "dba-profile_5"
+    type: 1
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 32768
+    assure_kbps: 0
+    max_kbps: 0
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    bind_times: 0
+  - profile_id: 6
+    profile_name: "dba-profile_6"
+    type: 1
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 102400
+    assure_kbps: 0
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    max_kbps: 0
+    bind_times: 0
+  - profile_id: 7
+    profile_name: "dba-profile_7"
+    type: 2
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 0
+    assure_kbps: 32768
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    max_kbps: 0
+    bind_times: 0
+  - profile_id: 8
+    profile_name: "dba-profile_8"
+    type: 2
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 0
+    assure_kbps: 102400
+    max_kbps: 0
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    bind_times: 0
+  - profile_id: 9
+    profile_name: "dba-profile_9"
+    type: 3
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 0
+    assure_kbps: 32768
+    max_kbps: 65536
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    bind_times: 0
+  - profile_id: 10
+    profile_name: "dba-profile_10"
+    type: 1
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 2752
+    assure_kbps: 0
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    max_kbps: 0
+    bind_times: 0
+  - profile_id: 20
+    profile_name: "dba-profile_20"
+    type: 5
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 2048
+    assure_kbps: 2048
+    max_kbps: 10240
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    bind_times: 0
+  - profile_id: 30
+    profile_name: "DBA_100M"
+    type: 3
+    bandwidth_compensation: "No"
+    fix_delay: "No"
+    fix_kbps: 0
+    assure_kbps: 102400
+    max_kbps: 102400
+    additional_bandwidth: "best-effort"
+    best_effort_weight: 0
+    best_effort_priority: 0
+    bind_times: 0

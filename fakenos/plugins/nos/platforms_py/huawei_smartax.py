@@ -54,6 +54,16 @@ SERVICES_SPACING: Dict[str, int] = {
     "State": ("left", len(max("State", "disable", "enable", key=len))),
 }
 
+DBA_PROFILES_SPACING: Dict[str, int] = {
+    "Profile-ID": ("right", len(max("Profile-ID", "10", "1", key=len))),
+    "Type": ("right", len(max("Type", "1", "2", "3", "4", "5", key=len))),
+    "Bandwidth Compensation": ("right", len(max("Bandwidth", "Compensation", "no", "yes", key=len))),
+    "Fix (kbps)": ("right", len(max("Fix", "(kbps)", "102400", "10240000", key=len))),
+    "Assure (kbps)": ("right", len(max("Assure", "(kbps)", "102400", "10240000", key=len))),
+    "Max (kbps)": ("right", len(max("Max", "(kbps)", "102400", "10240000", key=len))),
+    "Bind times": ("right", len(max("Bind", "times", "1" "10", key=len))),
+}
+
 class HuaweiSmartAX(BaseDevice):
     """
     Class that keeps track of the state of the Huawei SmartAX device.
@@ -75,7 +85,7 @@ class HuaweiSmartAX(BaseDevice):
         if any(' ' in t for t in titles):
             titles_parsed = [title.split(' ') if ' ' in title else [title, ""] for title in titles]
             titles_parsed = ["_".join(title).lower() if title[1] else title[0].lower() for title in titles_parsed]
-            titles_parsed = [title.replace("/", "_").replace("-", "_") for title in titles_parsed]
+            titles_parsed = [title.replace("/", "_").replace("-", "_").replace("(", "").replace(")", "") for title in titles_parsed]
             return titles_parsed
         return [title.lower().replace("/", "_") for title in titles]
     
@@ -171,6 +181,28 @@ class HuaweiSmartAX(BaseDevice):
                 service[keyword] = services_column[services.index(service)]
         return self.render("huawei_smartax/display_sysman_service_state.j2", titles=list(titles.values()), services=services)
 
+    def make_dba__profile_add_profile__name(self, base_prompt, current_prompt, command):
+        """ Adds a DBA profile with the corresponding parameters. """
+        return self.render("huawei_smartax/dba__profile_add_profile__name.j2")
+    
+    def make_display_dba__profile_all(self, base_prompt, current_prompt, command):
+        """ Displays all the DBA profiles. """
+        dba_profiles = self.configurations["dba_profiles"]
+        titles = ["Profile-ID", "Type", "Bandwidth Compensation", "Fix (kbps)", "Assure (kbps)", "Max (kbps)", "Bind times"]
+        titles: dict = {title:keyword for title, keyword in zip(titles, self._get_keywords(titles))}
+        for title, keyword in titles.items():
+            dba_profiles_column = [dba_profile[keyword] for dba_profile in dba_profiles]
+            results = self._add_whitespaces_column([title] + dba_profiles_column, DBA_PROFILES_SPACING)
+            dba_profiles_column = results[1:]
+            titles[title] = results[0]
+            for dba_profile in dba_profiles:
+                dba_profile[keyword] = dba_profiles_column[dba_profiles.index(dba_profile)]
+        return self.render("huawei_smartax/display_dba__profile_all.j2", dba_profiles=dba_profiles)
+    
+    def make_display_dba__profile_profile__name(self, base_prompt, current_prompt, command):
+        """ Displays one DBA profile based on the name. """
+        dba_profile = self.configurations["dba_profiles"][-1]
+        return self.render("huawei_smartax/display_dba__profile_profile__name.j2", **dba_profile)
 
 commands = {
     "enable": {
@@ -178,6 +210,12 @@ commands = {
         "new_prompt": ENABLE_PROMPT,
         "help": "enter exec prompt",
         "prompt": INITIAL_PROMPT,
+    },
+    "config": {
+        "output": None,
+        "new_prompt": CONFIG_PROMPT,
+        "help": "enter configuration mode",
+        "prompt": ENABLE_PROMPT,
     },
     "display board": {
         "output": HuaweiSmartAX.make_display_board,
@@ -193,6 +231,21 @@ commands = {
         "output": HuaweiSmartAX.make_display_sysman_service_state,
         "help": "It shows the state of the running services",
         "prompt": [INITIAL_PROMPT, ENABLE_PROMPT],
+    },
+    "display dba-profile all": {
+        "output": HuaweiSmartAX.make_display_dba__profile_all,
+        "help": "Displays all the DBA profiles.",
+        "prompt": [CONFIG_PROMPT],
+    },
+    "display dba-profile profile-name DBA_100M": {
+        "output": HuaweiSmartAX.make_display_dba__profile_profile__name,
+        "help": "Displays one DBA profile based on the name.",
+        "prompt": [CONFIG_PROMPT],
+    },
+    "dba-profile add profile-name DBA_100M type3 assure 102400 max 102400": {
+        "output": HuaweiSmartAX.make_dba__profile_add_profile__name,
+        "help": "Adds a DBA profile with the corresponding parameters.",
+        "prompt": [CONFIG_PROMPT],
     },
     "quit": {
         "output": True,

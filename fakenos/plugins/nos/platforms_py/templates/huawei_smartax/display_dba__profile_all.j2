@@ -1,0 +1,8 @@
+  ----------------------------------------------------------------------------  
+  Profile-ID   type   Bandwidth      Fix        Assure        Max        Bind   
+                     compensation    (kbps)     (kbps)        (kbps)     times  
+  ----------------------------------------------------------------------------  
+  {% for dba_profile in dba_profiles -%}
+  {{ dba_profile.profile_id }}   {{ dba_profile.type }}  {{ dba_profile.bandwidth_compensation }}  {{ dba_profile.fix_kbps }}   {{ dba_profile.assure_kbps }}      {{ dba_profile.max_kbps }}     {{ dba_profile.bind_times }}
+  {% endfor -%}
+  ---------------------------------------------------------------------------- 
