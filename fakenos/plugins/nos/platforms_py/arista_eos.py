@@ -23,12 +23,14 @@ class AristaEOS(BaseDevice):
     Class that keeps track of the state of the Arista EOS device.
     """
 
-    def make_show_clock(self, base_prompt, current_prompt, command):
+    def make_show_clock(self, **kwargs):
         """Return the current time."""
         return self.render("arista_eos/show_clock.j2", time=time.strftime("%a %b %d %H:%M:%S %Y"))
 
-    def make_exit(self, base_prompt, current_prompt, command):
+    def make_exit(self, **kwargs):
         """Exit the current level of the CLI."""
+        base_prompt = kwargs["base_prompt"]
+        current_prompt = kwargs["current_prompt"]
         initial_prompt = INITIAL_PROMPT.format(base_prompt=base_prompt)
         enable_prompt = ENABLE_PROMPT.format(base_prompt=base_prompt)
         config_prompt = CONFIG_PROMPT.format(base_prompt=base_prompt)
@@ -38,20 +40,24 @@ class AristaEOS(BaseDevice):
             return {"output": "", "new_prompt": ENABLE_PROMPT}
         raise RuntimeError(f"make_exit does not know how to handle '{current_prompt}' prompt")
 
-    def make_running_configuration(self, base_prompt, current_prompt, command):
+    def make_running_configuration(self, **kwargs):
         """Return the running configuration."""
+        base_prompt = kwargs["base_prompt"]
         return self.render("arista_eos/show_running-config.j2", base_prompt=base_prompt)
 
-    def make_show_ip_int_br(self, base_prompt, current_prompt, command):
+    def make_show_ip_int_br(self, **kwargs):
         """Return the IP interface brief output."""
+        base_prompt = kwargs["base_prompt"]
         return self.render("arista_eos/show_ip_int_br.j2", base_prompt=base_prompt)
 
-    def make_show_running_config(self, base_prompt, current_prompt, command):
+    def make_show_running_config(self, **kwargs):
         """Return the running configuration."""
+        base_prompt = kwargs["base_prompt"]
         return self.render("arista_eos/show_running-config.j2", base_prompt=base_prompt)
 
-    def make_show_version(self, base_prompt, current_prompt, command):
+    def make_show_version(self, **kwargs):
         """Return the system version."""
+        base_prompt = kwargs["base_prompt"]
         return self.render("arista_eos/show_version.j2", base_prompt=base_prompt)
 
 

@@ -9,6 +9,7 @@ import os
 import sys
 import time
 from typing import List
+import subprocess
 
 import yaml
 from invoke import task
@@ -298,3 +299,11 @@ def netmiko_check(ctx, device_type: str):
 
     print("Everything is OK! ✅")
     print(f"Time spent: {time.time()-init_time:.2f}s")
+
+@task(help={"platform": "Platform to generate the configuration for."})
+def generate_config(ctx, platform: str):
+    """
+    Generate a configuration for a specific platform.
+    """
+    subprocess.run(["python", f"config_generators/{platform}.py"], check=True)
+    

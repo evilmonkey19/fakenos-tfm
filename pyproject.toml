@@ -63,6 +63,7 @@ psutil = "*"
 ruamel-yaml = "*"
 mkdocs-static-i18n = "*"
 pytest-repeat = "*"
+wonderwords = "*"
 
 [tool.black]
 line-length = 120

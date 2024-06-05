@@ -77,6 +77,7 @@ class CMDShell(Cmd):
             value['regex']: key for key, value in self.commands.items() if "regex" in value
         }
         regexes = {regex.replace("[", "(").replace("]", ")?"): value for regex, value in regexes.items()}
+        regexes = {regex.replace("\\S+", "(.*)"): value for regex, value in regexes.items()}
         return {re.compile(regex): value for regex, value in regexes.items()}
 
     def start(self):
@@ -157,8 +158,8 @@ class CMDShell(Cmd):
             found = regex.search(line)
             if not found:
                 continue
-            base_command = found.group(0)
-            args = line.replace(cmd, "").strip()
+            base_command = cmd
+            args = found.groups()[-1]
             if base_command:
                 return cmd, args
         return None, None
@@ -186,7 +187,6 @@ class CMDShell(Cmd):
                 return response
             response = cmd_data["output"]
             if callable(response):
-
                 response = response(
                     self.nos.device,
                     base_prompt=self.base_prompt,

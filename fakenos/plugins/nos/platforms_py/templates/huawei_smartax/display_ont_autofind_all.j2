@@ -1,0 +1,64 @@
+{% if gpon_onts %}
+  ---------------------------------------------------------------------------- 
+  {% for ont in gpon_onts %}
+  Number              : {{ loop.index + 1 }}
+  F/S/P               : {{ ont.fsp }}
+  ONT NNI type        : {{ ont.nni_type }}
+  Ont SN              : {{ ont.sn }} ({{ ont.vendor_id }}-{{ ont.sn[:8] }})
+  {% if ont.password|length > 50 -%}
+  Password            : {{ ont.password[:50] }}
+                        {{ ont.password[50:] }}
+  {% else -%}
+  Password            : {{ ont.password }}
+  {% endif -%}
+  {% if ont.loid|length > 50 -%}
+  Loid                : {{ ont.loid[:50] }}
+                        {{ ont.loid[50:] }}
+  {% else -%}
+  Loid                : {{ ont.loid }}
+  {% endif -%}
+  Checkcode           : {{ ont.checkcode }}
+  VendorID            : {{ ont.vendor_id }}
+  Ont Version         : {{ ont.version }}
+  Ont SoftwareVersion : {{ ont.software_version }}
+  Ont EquipmentID     : {{ ont.equipment_id }}
+  Ont Customized Info : {{ ont.customized_info or '-' }}
+  Ont MAC             : {{ ont.mac or '-' }}
+  Ont Equipment SN    : {{ ont.equipment_sn or '-' }}
+  Ont autofind time   : {{ ont.autofind_time }}
+  Multi channel       : {{ ont.multi_channel }}
+  ----------------------------------------------------------------------------
+{% endfor %}
+  The number of GPON autofind ONT is {{ gpon_onts | length }}
+{% endif %}
+{% if epon_onts %}
+  ----------------------------------------------------------------------------
+  {% for ont in epon_onts %}
+  Number              : {{ loop.index + 1 }}
+  F/S/P               : {{ ont.fsp }}
+  ONT NNI type        : {{ ont.ont_nni_type }}
+  ONT MAC             : {{ ont.ont_mac }}
+  {% if ont.password|length > 50 %}
+  Password            : {{ ont.password[:50] }}
+                        {{ ont.password[50:] }}
+  {% else %}
+  Password            : {{ ont.password }}
+  {% endif %}
+  {% if ont.loid|length > 50 %}
+  Loid                : {{ ont.loid[:50] }}
+                        {{ ont.loid[50:] }}
+  {% else %}
+  Loid                : {{ ont.loid }}
+  {% endif %}
+  Checkcode           : {{ ont.checkcode }}
+  VendorID            : {{ ont.vendor_id }}
+  OUI version         : {{ ont.oui_version }}
+  ONT model           : {{ ont.model }}
+  ONT extended model  : {{ ont.extended_model }}
+  ONT software version: {{ ont.software_version }}
+  ONT hardware version: {{ ont.hardware_version }}
+  Ont Customized Info : {{ ont.customized_info }}
+  ONT autofind time   : {{ ont.autofind_time }}
+  ----------------------------------------------------------------------------
+  {% endfor -%}  The number of EPON autofind ONT is {{ epon_onts | length }}
+{% endif %}
