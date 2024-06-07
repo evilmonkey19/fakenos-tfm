@@ -226,7 +226,7 @@ class CMDShell(Cmd):
         """Method called if no do_xyz methods found"""
         log.debug("shell.default '%s' running command '%s'", self.base_prompt, [line])
         response = self.get_command_response(line)
-        if response is True and self.is_running.is_set():
+        if response is True or not self.is_running.is_set():
             # We exit the terminal
             return True
         if response is not None:

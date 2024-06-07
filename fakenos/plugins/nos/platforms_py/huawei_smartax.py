@@ -168,9 +168,17 @@ class HuaweiSmartAX(BaseDevice):
             In port 0/ 1/0 , the total of ONTs are: 3, online: 3
             -----------------------------------------------------------------------------
         """
-        if not isinstance(kwargs['args'], str) or not re.match(r"d+\sd+\sd+(\sd+)?", kwargs['args']):
+        if not isinstance(kwargs['args'], str) \
+            or not all(val.isdigit() for val in kwargs['args'].split(" ")) \
+            or not len(kwargs['args'].split(" ")) >= 3:
             return "Please provide the port number correctly."
 
+        if len(kwargs['args'].split(" ")) == 3:
+            return self.make_display_ont_info_list(**kwargs)
+        return self.make_display_ont_info_one(**kwargs)
+    
+    def make_display_ont_info_list(self, **kwargs):
+        """ Return the ONTs information in a list format"""    
         try:
 
             frame_index, board_index, port_index = (int(value) for value in kwargs['args'].split(" "))
@@ -208,6 +216,25 @@ class HuaweiSmartAX(BaseDevice):
         except (IndexError, ValueError):
             return "There are no ONTs in the specified port."
         
+    def make_display_ont_info_one(self, **kwargs):
+        """ Return the ONTs information in a single format"""    
+        try:
+            frame_index, board_index, port_index, ont_id = (int(value) for value in kwargs['args'].split(" "))
+            frame = copy.deepcopy(self.configurations["frames"][frame_index])
+            if frame['slots'][board_index]['boardname'] not in GPON_BOARDS:
+                return "The board is not a PON board."
+            if port_index >= GPON_BOARDS[frame['slots'][board_index]['boardname']]:
+                return "The port does not exist in the board."
+            board = frame['slots'][board_index]
+            onts = board["ports"][port_index]
+            ont = next((ont for ont in onts if ont["ont_id"] == ont_id), None)
+            if not ont:
+                return "The ONT does not exist in the port."
+            ont['fsp'] = f"{frame_index}/ {board_index}/{port_index}"
+            return self.render("huawei_smartax/display_ont_info_one.j2", **ont)
+        except (IndexError, ValueError):
+            return "There are no ONTs in the specified port."
+
     def make_display_sysman_service_state(self, **kwargs):
         """ Return the sysman service state information """
         services = copy.deepcopy(self.configurations["services"])

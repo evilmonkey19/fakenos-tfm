@@ -9,6 +9,21 @@ from wonderwords import RandomSentence
 s = RandomSentence()
 
 
+def get_random_mac():
+    """ It generates a random mac-address in the format xxxx-xxxx-xxxx """
+    mac_address: str = ''
+    for _ in range(3):
+        mac_address += ''.join(random.choices(string.hexdigits, k=4)) + '-'
+    return mac_address[:-1].lower()
+
+def get_ont_global_id():
+    """ Get ont global id """
+    next_global_id = 0
+    while True:
+        yield next_global_id
+        next_global_id += 1
+
+ont_global_id = get_ont_global_id()
 
 ont_models = [
     'EchoLife EG8145V5',
@@ -95,92 +110,6 @@ configurations = {
 
 gpon_board = random.choice(list(gpon_boards))
 
-configurations['frames'][0]['slots'] = [
-    {
-        'boardname': gpon_board,
-        'online_offline': '',
-        'slotid': 0,
-        'status': 'Normal',
-        'subtype0': '',
-        'subtype1': '',
-        'ports': [[
-            {
-                **random.choice(ont_states),
-                'ont_id': i,
-                'description': s.bare_bone_with_adjective(),
-                'sn': ''.join(random.choices(string.ascii_uppercase + string.digits, k=16)),
-                'registered': random.choice([True, False]),
-                'is_epon': False,
-                'oui_version': 'CTC3.0',
-                'model': '240',
-                'extended_model': 'HG8240',
-                'nni_type': 'auto',
-                'password': '0x303030303030303030300000000000000000000000000000000000000000000000000000(0000000000)',
-                'loid': '000000000000000000000000',
-                'checkcode': '000000000000',
-                'vendor_id': 'HWTC',
-                'version': 'MXU VER.A',
-                'software_version': 'V8R017C00',
-                'hardware_version': '140C4510',
-                'equipment_id': "MXU",
-                'customized_info': '',
-                'mac': '',
-                'equipment_sn': '',
-                'multi-channel': 'Not support',
-                
-                
-            } for i in range(random.randint(1,32))
-        ] for _ in range(gpon_boards[gpon_board])]
-    },
-    {
-        'boardname': '',
-        'online_offline': '',
-        'slotid': 1,
-        'status': '',
-        'subtype0': '',
-        'subtype1': '',
-    },
-    {
-        'boardname': '',
-        'online_offline': '',
-        'slotid': 2,
-        'status': '',
-        'subtype0': '',
-        'subtype1': '',
-    },
-    {
-        'boardname': random.choice(["H901PILA", "H901PISA", "H901PISB", "H902PISB"]),
-        'online_offline': '',
-        'slotid': 2,
-        'status': 'Normal',
-        'subtype0': '',
-        'subtype1': '',
-    },
-    {
-        'boardname': random.choice(['H902MPLAE', 'H901MPSCE']),
-        'online_offline': '',
-        'slotid': 3,
-        'status': 'Normal',
-        'subtype0': 'CPCF',
-        'subtype1': '',
-    },
-    {
-        'boardname': random.choice(['H901MPSCE', 'H902MPLAE']),
-        'online_offline': 'Offline',
-        'slotid': 4,
-        'status': 'Standby_failed',
-        'subtype0': 'CPCF',
-        'subtype1': '',
-    },
-    {
-        'boardname': '',
-        'online_offline': '',
-        'slotid': 5,
-        'status': '',
-        'subtype0': '',
-        'subtype1': '',
-    }
-]
 
 configurations['services'] = [
     {
@@ -460,6 +389,140 @@ configurations['dba_profiles'] = [
         'bind_times': 0
     }
 ]
+
+configurations['t-conts'] = [
+    {
+        't-cont': 0,
+    }
+]
+
+configurations['line_profiles'] = [
+    {
+        'profile_id': 10,
+        'profile_name': 'line-profile_10',
+        'access-type': 'gpon',
+        'fec_upstream_switch': 'Disable',
+        'omcc_encrypt_switch': 'On',
+        'qos_mode': 'PQ',
+        'mapping_mode': 'VLAN',
+        'tr069_management': 'disable',
+        'tr069_ip_index': '0',
+        't-conts': [0,1],
+    },
+]
+
+
+configurations['frames'][0]['slots'] = [
+    {
+        'boardname': gpon_board,
+        'online_offline': '',
+        'slotid': 0,
+        'status': 'Normal',
+        'subtype0': '',
+        'subtype1': '',
+        'ports': [[
+            {
+                **random.choice(ont_states),
+                'ont_id': i,
+                'description': s.bare_bone_with_adjective(),
+                'sn': ''.join(random.choices(string.ascii_uppercase + string.digits, k=16)),
+                'registered': random.choice([True, False]),
+                'is_epon': False,
+                'oui_version': 'CTC3.0',
+                'model': '240',
+                'extended_model': 'HG8240',
+                'nni_type': 'auto',
+                'actual_nni_type': 'auto',
+                'last_actual_nni_type': 'auto',
+                'password': '0x303030303030303030300000000000000000000000000000000000000000000000000000(0000000000)',
+                'loid': '000000000000000000000000',
+                'checkcode': '000000000000',
+                'vendor_id': 'HWTC',
+                'version': 'MXU VER.A',
+                'software_version': 'V8R017C00',
+                'hardware_version': '140C4510',
+                'equipment_id': "MXU",
+                'customized_info': '',
+                'mac': get_random_mac(),
+                'equipment_sn': '',
+                'multi-channel': 'Not support',
+                'llid': '',
+                'distance_m': random.randint(10, 90),
+                'last_distance_m': random.randint(10, 90),
+                'rtt_tq': '',
+                'memory_occupation': random.randint(10, 90),
+                'cpu_occupation': random.randint(10, 90),
+                'temperature': random.randint(30,60),
+                'authentic_type': 'MAC-auth',
+                'management_mode': random.choices(['OMCI', 'OAM']),
+                'software_work_mode': 'normal',
+                'multicast_mode': 'IGMP-Snooping',
+                'last_down_cause': 'dying-gasp',
+                'type_d_support': 'Not support',
+                'isolation_state': 'normal',
+                'interoperability_mode': 'unknown',
+                'fec_upstream_state': 'disable',
+                'vs_id': 0,
+                'vs_name': 'admin-vs',
+                'global_ont_id': next(ont_global_id),
+                'fiber_route': '',
+                'line_profile_id': random.randint(0, 10),
+                'line_profile_name': '',
+            } for i in range(random.randint(1,32))
+        ] for j in range(gpon_boards[gpon_board])]
+    },
+    {
+        'boardname': '',
+        'online_offline': '',
+        'slotid': 1,
+        'status': '',
+        'subtype0': '',
+        'subtype1': '',
+    },
+    {
+        'boardname': '',
+        'online_offline': '',
+        'slotid': 2,
+        'status': '',
+        'subtype0': '',
+        'subtype1': '',
+    },
+    {
+        'boardname': random.choice(["H901PILA", "H901PISA", "H901PISB", "H902PISB"]),
+        'online_offline': '',
+        'slotid': 2,
+        'status': 'Normal',
+        'subtype0': '',
+        'subtype1': '',
+    },
+    {
+        'boardname': random.choice(['H902MPLAE', 'H901MPSCE']),
+        'online_offline': '',
+        'slotid': 3,
+        'status': 'Normal',
+        'subtype0': 'CPCF',
+        'subtype1': '',
+    },
+    {
+        'boardname': random.choice(['H901MPSCE', 'H902MPLAE']),
+        'online_offline': 'Offline',
+        'slotid': 4,
+        'status': 'Standby_failed',
+        'subtype0': 'CPCF',
+        'subtype1': '',
+    },
+    {
+        'boardname': '',
+        'online_offline': '',
+        'slotid': 5,
+        'status': '',
+        'subtype0': '',
+        'subtype1': '',
+    }
+]
+
+
+
 
 with open('huawei_smartax.yaml.j2', 'w', encoding='utf-8') as f:
     f.write(yaml.dump(configurations))
