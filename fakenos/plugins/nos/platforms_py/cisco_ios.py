@@ -25,17 +25,17 @@ class CiscoIOS(BaseDevice):
 
     hola = "Hello test"
 
-    def make_show_clock(self, base_prompt, current_prompt, command):
+    def make_show_clock(self, **kwargs):
         "Return String in format '*11:54:03.018 UTC Sat Apr 16 2022'"
         return time.strftime("*%H:%M:%S.000 %Z %a %b %d %Y")
 
-    def make_show_running_config(self, base_prompt, current_prompt, command):
+    def make_show_running_config(self, **kwargs):
         "Return String of running configuration"
-        return self.render("cisco_ios/show_running-config.j2", base_prompt=base_prompt)
+        return self.render("cisco_ios/show_running-config.j2", base_prompt=kwargs["base_prompt"])
 
-    def make_show_version(self, base_prompt, current_prompt, command):
+    def make_show_version(self, **kwargs):
         "Return String of system hardware and software status"
-        return self.render("cisco_ios/show_version.j2", base_prompt=base_prompt)
+        return self.render("cisco_ios/show_version.j2", base_prompt=kwargs["base_prompt"])
 
 
 commands = {

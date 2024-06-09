@@ -133,7 +133,12 @@ class TapIO(io.StringIO):
         self.lines.insert(0, value)
 
 
-def channel_to_shell_tap(channel_stdio, shell_stdin, shell_replied_event, run_srv):
+def channel_to_shell_tap(
+        channel_stdio: paramiko.channel.ChannelFile,
+        shell_stdin: TapIO,
+        shell_replied_event: threading.Event,
+        run_srv: threading.Event,
+    ):
     """
     Method to tap into the channel_stdio and send it to the shell
     """
@@ -146,7 +151,9 @@ def channel_to_shell_tap(channel_stdio, shell_stdin, shell_replied_event, run_sr
             log.error("SSH channel is not active. Exiting.")
             break
         try:
-            if byte in (b"\r", b"\n"):
+            if byte == b'\x1b': # arrows
+                channel_stdio.read(2)
+            elif byte in (b"\r", b"\n"):
                 channel_stdio.write(b"\r\n")
                 log.debug("ssh_server.channel_to_shell_tap echoing new line to channel: %s", [b"\r\n"])
                 buffer.write(byte)
@@ -157,11 +164,12 @@ def channel_to_shell_tap(channel_stdio, shell_stdin, shell_replied_event, run_sr
                 log.debug("ssh_server.channel_to_shell_tap sending line to shell: %s", [line])
                 shell_stdin.write(line)
                 shell_replied_event.clear()
-            elif byte == b'\x7f' and buffer.tell() > 0: # backspace
-                channel_stdio.write(b"\b \b")
-                log.debug("ssh_server.channel_to_shell_tap echoing backspace to channel: %s", [b"\b \b"])
-                buffer.seek(buffer.tell() - 1)
-                buffer.truncate()
+            elif byte == b'\x7f': 
+                if buffer.tell() > 0: # backspace
+                    channel_stdio.write(b"\b \b")
+                    log.debug("ssh_server.channel_to_shell_tap echoing backspace to channel: %s", [b"\b \b"])
+                    buffer.seek(buffer.tell() - 1)
+                    buffer.truncate()
             else:
                 channel_stdio.write(byte)
                 log.debug("ssh_server.channel_to_shell_tap echoing byte to channel: %s", [byte])
@@ -180,7 +188,7 @@ def _get_permitted_bytes() -> List[bytes]:
     permitted_bytes += [bytes([i]) for i in range(48, 58)] # b'0' to b'9'
     permitted_bytes += [bytes([i]) for i in range(65, 91)] # b'A' to b'Z'
     permitted_bytes += [bytes([i]) for i in range(97, 123)] # b'a' to b'z'
-    permitted_bytes += [b'-', b' ', b'_', b'/']
+    permitted_bytes += [b'-', b' ', b'_', b'/', b'?']
     return permitted_bytes
 
 def shell_to_channel_tap(
