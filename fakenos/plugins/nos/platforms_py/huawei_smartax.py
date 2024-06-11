@@ -7,14 +7,14 @@ NOS module for Huawei SmartAX
 import copy
 import os
 import re
+import random
 import time
 from datetime import datetime
+import datetime
 import random
 from typing import Dict, List
 
 from fakenos.plugins.nos.platforms_py.base_template import BaseDevice
-import random
-import datetime
 
 
 NAME: str = "huawei_smartax"
@@ -22,6 +22,10 @@ INITIAL_PROMPT: str = "{base_prompt}>"
 ENABLE_PROMPT: str = "{base_prompt}#"
 CONFIG_PROMPT: str = "{base_prompt}(config)#"
 DEVICE_NAME: str = "HuaweiSmartAX"
+CONFIG_GPON_LINEPROFILE: str = r"^{base_prompt}(config-gpon-lineprofile-\d+)#"
+CONFIG_GPON_SRVPROFILE: str = r"^{base_prompt}(config-gpon-srvprofile-\d+)#"
+CONFIG_IF_GPON: str = r"^{base_prompt}(config-if-gpon-\d+\/\d+)#"
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_CONFIGURATION = os.path.join(BASE_DIR, "configurations/huawei_smartax.yaml.j2")
@@ -70,6 +74,12 @@ DBA_PROFILES_SPACING: Dict[str, int] = {
     "Bind times": ("right", len(max("Bind", "times", "1", "10", key=len))),
 }
 
+ONT__LINEPROFILE_SPACING: Dict[str, int] = {
+    "Profile-ID": ("left", len(max("Profile-ID", "10", "1", key=len))),
+    "Profile-name": ("left", 40),
+    "Binding times": ("left", len(max("Binding times", "1", "10", key=len))),
+}
+
 GPON_BOARDS: Dict[str, int] = {
     'H901XGHDE': 8,
     'H901OGHK': 24,
@@ -84,15 +94,17 @@ GPON_BOARDS: Dict[str, int] = {
 }
 
 class HuaweiSmartAX(BaseDevice):
+    """
+    Class that keeps track of the state of the Huawei SmartAX device.
+    """
     SYSTEM_STARTUP_TIME: datetime = datetime.datetime.now() \
             - datetime.timedelta(days=random.randint(1, 365), 
                                  hours=random.randint(1, 24),
                                  minutes=random.randint(1, 60), 
                                  seconds=random.randint(1, 60))
+    
+    changing_config: dict = {}
 
-    """
-    Class that keeps track of the state of the Huawei SmartAX device.
-    """
     def _add_whitespaces_column(self, column: List[str], spacing: Dict[str, int] = None):
         """
         Add whitespacing to a column depending on the
@@ -168,11 +180,21 @@ class HuaweiSmartAX(BaseDevice):
             In port 0/ 1/0 , the total of ONTs are: 3, online: 3
             -----------------------------------------------------------------------------
         """
-        if not isinstance(kwargs['args'], str) \
-            or not all(val.isdigit() for val in kwargs['args'].split(" ")) \
-            or not len(kwargs['args'].split(" ")) >= 3:
+        prompt_config_if_gpon = CONFIG_IF_GPON.replace("(", "\\(").replace(")", "\\)")
+        prompt_config_if_gpon = prompt_config_if_gpon.format(base_prompt=kwargs["base_prompt"])
+        if not all(val.isdigit() for val in kwargs['args'].split(" ")):
             return "Please provide the port number correctly."
-
+        if re.match(prompt_config_if_gpon, kwargs["current_prompt"]):
+            pattern = r"^\d+ \d+$"
+            if not re.match(pattern, kwargs['args']):
+                return "Please provide the port number correctly."
+            matches = re.findall(r'\d+', kwargs['current_prompt'])
+            frame = matches[-1]
+            slot = matches[-2]
+            kwargs["args"] = f"{frame} {slot} {kwargs['args']}"
+        pattern = r"^\d+ \d+ \d+ (\d+)?$"
+        if not re.match(pattern, kwargs['args']):
+            return "Please provide the port number correctly."
         if len(kwargs['args'].split(" ")) == 3:
             return self.make_display_ont_info_list(**kwargs)
         return self.make_display_ont_info_one(**kwargs)
@@ -180,9 +202,7 @@ class HuaweiSmartAX(BaseDevice):
     def make_display_ont_info_list(self, **kwargs):
         """ Return the ONTs information in a list format"""    
         try:
-
             frame_index, board_index, port_index = (int(value) for value in kwargs['args'].split(" "))
-            
             titles_table_1 = ["F/S/P", "ONT ID", "SN", "Control flag", "Run state", "Config state", "Match state", "Protect side"]
             titles_table_2 = ["F/S/P", "ONT-ID", "Description"]
             titles_table_1 = {title:keyword for title, keyword in zip(titles_table_1, self._get_keywords(titles_table_1))}
@@ -194,6 +214,7 @@ class HuaweiSmartAX(BaseDevice):
                 return "The port does not exist in the board."
             board = frame['slots'][board_index]
             onts = board["ports"][port_index]
+            onts = [ont for ont in onts if ont.get("registered")]
             port = f"{frame_index}/ {board_index}/{port_index}"
             for ont in onts:
                 ont["f_s_p"] = port
@@ -231,7 +252,14 @@ class HuaweiSmartAX(BaseDevice):
             if not ont:
                 return "The ONT does not exist in the port."
             ont['fsp'] = f"{frame_index}/ {board_index}/{port_index}"
-            return self.render("huawei_smartax/display_ont_info_one.j2", **ont)
+            line_profile = next((line_profile for line_profile in self.configurations["line_profiles"] if line_profile["profile_id"] == ont["line_profile_id"]), None)
+            t_conts = [t_cont for t_cont in self.configurations["t_conts"] if line_profile["t-conts"]]
+            return self.render(
+                "huawei_smartax/display_ont_info_one.j2", 
+                **ont,
+                **line_profile,
+                t_conts=t_conts,
+                )
         except (IndexError, ValueError):
             return "There are no ONTs in the specified port."
 
@@ -315,10 +343,13 @@ class HuaweiSmartAX(BaseDevice):
         
     def make_display_ont_autofind(self, **kwargs):
         """ Displays the ONT autofind information. """
-        gpon_onts, epon_onts = self._get_onts_autofind()
+        port: int = None
+        if kwargs["args"].isdigit():
+            port = int(kwargs["args"])
+        gpon_onts, epon_onts = self._get_onts_autofind(port_number=port)
         return self.render("huawei_smartax/display_ont_autofind_all.j2", gpon_onts = gpon_onts, epon_onts = epon_onts)
     
-    def _get_onts_autofind(self):
+    def _get_onts_autofind(self, port_number: int = None):
         """ Return the ONTs information that are not registered yet. """
         frames = copy.deepcopy(self.configurations["frames"])
         autofind_time = datetime.datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
@@ -327,12 +358,19 @@ class HuaweiSmartAX(BaseDevice):
             for slot in frame["slots"]:
                 if 'ports' not in slot:
                     continue
-                for port in slot["ports"]:
-                    for ont in port:
+                if port_number:
+                    for ont in slot["ports"][port_number]:
                         if not ont["registered"]:
-                            ont["fsp"] = f"{frames.index(frame)}/{frame['slots'].index(slot)}/{port.index(ont)}"
+                            ont["fsp"] = f"{frames.index(frame)}/{frame['slots'].index(slot)}/{port_number}"
                             ont["autofind_time"] = autofind_time
                             onts_autofind.append(ont)
+                else:
+                    for port in slot["ports"]:
+                        for ont in port:
+                            if not ont["registered"]:
+                                ont["fsp"] = f"{frames.index(frame)}/{frame['slots'].index(slot)}/{port.index(ont)}"
+                                ont["autofind_time"] = autofind_time
+                                onts_autofind.append(ont)
         gpon_onts = [ont for ont in onts_autofind if not ont["is_epon"]]
         epon_onts = [ont for ont in onts_autofind if ont["is_epon"]]
         return gpon_onts, epon_onts
@@ -364,10 +402,18 @@ class HuaweiSmartAX(BaseDevice):
         initial_prompt = INITIAL_PROMPT.format(base_prompt=base_prompt)
         enable_prompt = ENABLE_PROMPT.format(base_prompt=base_prompt)
         config_prompt = CONFIG_PROMPT.format(base_prompt=base_prompt)
+        config_gpon_srvprofile = CONFIG_GPON_SRVPROFILE.format(base_prompt=base_prompt)
+        config_gpon_lineprofile = CONFIG_GPON_LINEPROFILE.format(base_prompt=base_prompt)
+        config_if_gpon = CONFIG_IF_GPON.format(base_prompt=base_prompt)
+        patterns = [config_gpon_lineprofile, config_gpon_srvprofile, config_if_gpon]
+        patterns = [pattern.replace("(", "\\(").replace(")", "\\)") for pattern in patterns]
+        self.changing_config = None
         if current_prompt in [initial_prompt, enable_prompt]:
             return True
         if current_prompt in config_prompt:
             return {"output": None, "new_prompt": ENABLE_PROMPT}
+        if any(re.match(pattern, current_prompt) for pattern in patterns):
+            return {"output": None, "new_prompt": CONFIG_PROMPT}
         raise RuntimeError(f"make_quit does not know how to handle '{current_prompt}' prompt")
 
     def make_display_ont_info_all(self):
@@ -391,6 +437,195 @@ class HuaweiSmartAX(BaseDevice):
             "huawei_smartax/display_sysuptime.j2",
             days=days, hours=hours, minutes=minutes, seconds=seconds
         )
+    
+    def make_ont__srvprofile_gpon(self, **kwargs):
+        """ Return the ONT service profile based on the profile id. """
+        pattern = r'^(gpon|epon) profile-id \d+ profile-name \S+$'
+        if not re.match(pattern, kwargs["args"]):
+            return "Invalid args format"
+        self.changing_config = copy.deepcopy(self.configurations)
+        new_srv_profile = {
+            "profile_id": int(kwargs["args"].split(" ")[2]),
+            "profile_name": kwargs["args"].split(" ")[-1],
+            "access-type": kwargs["args"].split(" ")[0],
+        }
+        ont_srvprofile_prompt = "{base_prompt}(config-gpon-srvprofile-{profile_id})#"
+        prompt = ont_srvprofile_prompt.format(base_prompt=kwargs["base_prompt"], profile_id=new_srv_profile["profile_id"])
+        return {"output": "", "new_prompt": prompt}
+    
+    def make_ont__port(self, **kwargs):
+        """ Configure the service profile for the ONT ports. """
+        return ""
+    
+    def make_port_vlan(self, **kwargs):
+        """ Configure the VLAN for the port. """
+        return "Set ONT port(s) VLAN configuration, success: 1, failed: 0"
+
+    def make_ont__lineprofile(self, **kwargs):
+        """ Return the ONT line profile based on the profile id. """
+        pattern = r'^(gpon|epon) profile-id \d+ profile-name \S+$'
+        if not re.match(pattern, kwargs["args"]):
+            return "Invalid args format"
+        self.changing_config = copy.deepcopy(self.configurations)
+        new_line_profile = {
+            "profile_id": int(kwargs["args"].split(" ")[2]),
+            "profile_name": kwargs["args"].split(" ")[-1],
+            "access-type": kwargs["args"].split(" ")[0],
+            "fec_upstream_switch": 'Disable',
+            'omcc_encrypt_switch': 'On',
+            'qos_mode': 'PQ',
+            'mapping_mode': 'VLAN',
+            'tr069_management': 'disable',
+            'tr069_ip_index': 0,
+            't-conts': '',
+        }
+        self.changing_config["line_profiles"].append(new_line_profile)
+        ont_lineprofile_prompt = "{base_prompt}(config-gpon-lineprofile-{profile_id})#"
+        prompt = ont_lineprofile_prompt.format(base_prompt=kwargs["base_prompt"], profile_id=new_line_profile["profile_id"])
+        return {"output": "", "new_prompt": prompt}
+    
+    def make_tcont(self, **kwargs):
+        """ Configure the T-CONT """
+        pattern = r'^\d+ dba-profile-id \d+$'
+        if not re.match(pattern, kwargs["args"]):
+            return "Invalid args format"
+        tcont_id = int(kwargs["args"].split(" ")[0])
+        dba_profile_id = int(kwargs["args"].split(" ")[-1])
+        if dba_profile_id not in [dba_profile["profile_id"] for dba_profile in self.changing_config["dba_profiles"]]:
+            return "The DBA profile does not exist."
+        ont_lineprofile_id = int(kwargs["current_prompt"].split("-")[-1].split(")")[0])
+        line_profile = next((line_profile for line_profile in self.changing_config["line_profiles"] if line_profile["profile_id"] == ont_lineprofile_id), None)
+        if not line_profile:
+            return "The line profile does not exist."
+        line_profile["t-conts"] = 
+        self.changing_config["t_conts"].append({
+            "tcont_id": tcont_id,
+            "dba_profile_id": dba_profile_id,
+        })
+        
+        return ""
+    
+    def make_display_ont__lineprofile(self, **kwargs):
+        """ Display the ONT line profile """
+        # changing_config = copy.deepcopy(self.configurations)
+        # line_profiles = changing_config(line_profiles)
+        line_profiles = copy.deepcopy(self.configurations["line_profiles"])
+        if kwargs["args"] != "gpon all":
+            return "not implementd yet."
+        if not line_profiles:
+            return "There are no line profiles."
+        for line_profile in line_profiles:
+            line_profile["binding_times"] = 0
+        titles = ["Profile-ID", "Profile-name", "Binding times"]
+        titles: dict = {title:keyword for title, keyword in zip(titles, self._get_keywords(titles))}
+        for title, keyword in titles.items():
+            line_profiles_column = [line_profile[keyword] for line_profile in line_profiles]
+            results = self._add_whitespaces_column([title] + line_profiles_column, ONT__LINEPROFILE_SPACING)
+            line_profiles_column = results[1:]
+            titles[title] = results[0]
+            for line_profile in line_profiles:
+                line_profile[keyword] = line_profiles_column[line_profiles.index(line_profile)]
+        return self.render("huawei_smartax/display_ont__lineprofile.j2", line_profiles=line_profiles)
+
+    def make_gem_add(self, **kwargs):
+        """ Add a GEM port """
+        pattern = r'^\d+ eth tcont \d+'
+        args = kwargs["args"]
+        if not re.match(pattern, args):
+            return "Invalid args format"
+        args = args.split(" ")
+        gem_id = int(args[0])
+        if gem_id < 0 or gem_id > 1023:
+            return "Port must be between 0 and 1023"
+        tcont_id = int(args[-1])
+        if tcont_id not in [tcont["tcont_id"] for tcont in self.changing_config["t_conts"]]:
+            return "The T-CONT does not exist."
+        self.changing_config["gem"].append({
+            "gem_id": gem_id,
+            'service_type': 'eth',
+            "tcont_id": tcont_id,
+        })
+        return ""
+
+    
+    def make_gem_mapping(self, **kwargs):
+        """ Map a GEM port """
+        pattern = r'^\d+ \d+ vlan \d+'
+        args = kwargs["args"]
+        if not re.match(pattern, args):
+            return "Invalid args format"
+        args = args.split(" ")
+        gem_id = int(args[0])
+        if gem_id < 0 or gem_id > 1023:
+            return "Port must be between 0 and 1023"
+        mapping_index = int(args[1])
+        if not 0 <= mapping_index <= 7:
+            return "Mapping index must be between 0 and 7"
+        vlan = int(args[-1])
+        if not 1 <= vlan <= 4094:
+            return "VLAN must be between 1 and 4094"
+        gem = next((gem for gem in self.changing_config["gem"] if gem["gem_id"] == gem_id), None)
+        if not gem:
+            return "The GEM port does not exist."
+        gem["mapping_index"] = mapping_index
+        gem["vlan"] = vlan
+        return ""
+
+    
+    def make_interface_gpon(self, **kwargs):
+        """ Configure the GPON interface """
+        pattern = r'^\d+/\d+$'
+        if not re.match(pattern, kwargs["args"]):
+            return "Invalid args format"
+        frame = int(kwargs["args"].split("/")[0])
+        slot = int(kwargs["args"].split("/")[1])
+        if frame not in range(0, 6) or slot not in range(0, 16):
+            return "The frame or slot does not exist."
+        if self.configurations["frames"][frame]["slots"][slot]["boardname"] not in GPON_BOARDS:
+            return "The board is not a PON board."
+        self.changing_config = copy.deepcopy(self.configurations)
+        prompt = f"{kwargs['base_prompt']}(config-if-gpon-{frame}/{slot})#"
+        return {"output": "", "new_prompt": prompt}
+
+    def make_ont_add(self, **kwargs):
+        """ Add an ONT to the system """
+        args = kwargs.get("args", "")
+        pattern = r'^\d+ sn-auth \S{16} omci ont-lineprofile-id \d+ ont-srvprofile-id \d+ desc .{0,64}$'
+        if not re.match(pattern, args):
+            return "Invalid args format"
+        port = int(args.split(" ")[0])
+        if port not in range(GPON_BOARDS[self.configurations["frames"][0]["slots"][0]["boardname"]]):
+            return "The port does not exist."
+        onts_autofind_gpon, _ = self._get_onts_autofind(port_number=port)
+        ont = self._find_ont(onts_autofind_gpon, sn = args.split(" ")[2])
+        if ont:
+            onts = self.configurations["frames"][0]["slots"][0]["ports"][port]
+            ont["ont_id"] = len([ont for ont in onts if ont.get("registered")])+1
+            ont["registered"] = True
+            ont["line_profile_id"] = int(args.split(" ")[5])
+            ont["description"] = args.split(" ")[-1]
+            ont["control_flag"] = "active"
+            ont["run_state"] = "online"
+            ont["config_state"] = "normal"
+            ont["match_state"] = "match"
+            ont["management_mode"] = "OMCI"
+            for o in onts:
+                if o["sn"] == ont["sn"]:
+                    self.configurations["frames"][0]["slots"][0]["ports"][port][onts.index(o)] = ont
+                    break
+            return self.render("huawei_smartax/ont_add_successful.j2", port=port, ont=ont)
+        return ""
+
+    def _find_ont(self, onts: List[Dict], sn: str) -> Dict:
+        """ Find an ONT in the onts list """
+        return next((item for item in onts if item.get('sn') == sn), None)
+
+    def make_commit(self, **kwargs):
+        """ Commit the changes """
+        self.configurations = copy.deepcopy(self.changing_config)
+        self.changing_config = None
+        return ""
+
 commands = {
     "enable": {
         "output": None,
@@ -420,7 +655,12 @@ commands = {
         "output": HuaweiSmartAX.make_display_onts,
         "regex": "di[[splay]] ont inf[[o]] \\S+",  # display ont info 0/2/0
         "help": "display ont information",
-        "prompt": [INITIAL_PROMPT, ENABLE_PROMPT, CONFIG_PROMPT],
+        "prompt": [
+            INITIAL_PROMPT,
+            ENABLE_PROMPT,
+            CONFIG_PROMPT,
+            CONFIG_IF_GPON,
+        ],
     },
     "display sysman service state": {
         "output": HuaweiSmartAX.make_display_sysman_service_state,
@@ -443,11 +683,83 @@ commands = {
         "output": HuaweiSmartAX.make_display_ont_autofind,
         "regex": "di[[splay]] ont autof[[ind]] \\S+",
         "help": "Displays the ONT autofind information.",
-        "prompt": [CONFIG_PROMPT],
+        "prompt": [CONFIG_PROMPT, CONFIG_IF_GPON],
     },
     "quit": {
         "output": HuaweiSmartAX.make_quit,
         "help": "Exit the current level of the CLI",
-        "prompt": [INITIAL_PROMPT, ENABLE_PROMPT, CONFIG_PROMPT],
+        "prompt": [
+            INITIAL_PROMPT,
+            ENABLE_PROMPT,
+            CONFIG_PROMPT,
+            CONFIG_IF_GPON,
+            CONFIG_GPON_LINEPROFILE,
+            CONFIG_GPON_SRVPROFILE,
+        ],
     },
+    "ont-srvprofile": {
+        "output": HuaweiSmartAX.make_ont__srvprofile_gpon,
+        "regex": "ont-srvprof[[ile]] \\S+",
+        "help": "Return the ONT service profile based on the profile id.",
+        "prompt": [CONFIG_PROMPT],
+    },
+    "ont-port": {
+        "output": HuaweiSmartAX.make_ont__port,
+        "regex": "ont-port \\S+",
+        "help": "Configure the service profile for the ONT ports.",
+        "prompt": CONFIG_GPON_SRVPROFILE,
+    },
+    "port vlan": {
+        "output": HuaweiSmartAX.make_port_vlan,
+        "regex": "port vlan \\S+",
+        "help": "Configure the VLAN for the port.",
+        "prompt": CONFIG_GPON_SRVPROFILE,
+    },
+    "ont-lineprofile": {
+        "output": HuaweiSmartAX.make_ont__lineprofile,
+        "regex": "ont-lineprof[[ile]] \\S+",
+        "help": "Return the ONT line profile based on the profile id.",
+        "prompt": CONFIG_PROMPT,
+    },
+    "tcont": {
+        "output": HuaweiSmartAX.make_tcont,
+        "regex": "tcont \\S+",
+        "help": "Configure the T-CONT",
+        "prompt": CONFIG_GPON_LINEPROFILE,
+    },
+    "gem add": {
+        "output": HuaweiSmartAX.make_gem_add,
+        "regex": "gem add \\S+",
+        "help": "Add a GEM port",
+        "prompt": CONFIG_GPON_LINEPROFILE,
+    },
+    "gem mapping": {
+        "output": HuaweiSmartAX.make_gem_mapping,
+        "regex": "gem mapping \\S+",
+        "help": "Map a GEM port",
+        "prompt": CONFIG_GPON_LINEPROFILE,
+    },
+    "commit": {
+        "output": HuaweiSmartAX.make_commit,
+        "help": "Commit the changes",
+        "prompt": [CONFIG_IF_GPON, CONFIG_GPON_SRVPROFILE, CONFIG_GPON_LINEPROFILE],
+    },
+    "interface gpon": {
+        "output": HuaweiSmartAX.make_interface_gpon,
+        "regex": "interf[[ace]] g[[pon]] \\S+",
+        "help": "Configure the GPON interface",
+        "prompt": CONFIG_PROMPT,
+    },
+    "ont add": {
+        "output": HuaweiSmartAX.make_ont_add,
+        "regex": "ont add \\S+",
+        "help": "Add an ONT",
+        "prompt": CONFIG_IF_GPON,
+    },
+    "display ont-lineprofile": {
+        "output": HuaweiSmartAX.make_display_ont__lineprofile,
+        "regex": "di[[splay]] ont-lineprof[[ile]] \\S+",
+        "help": "Display the ONT line profile",
+        "prompt": [CONFIG_PROMPT]
+    }
 }

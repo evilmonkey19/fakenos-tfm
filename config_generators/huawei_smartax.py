@@ -390,9 +390,10 @@ configurations['dba_profiles'] = [
     }
 ]
 
-configurations['t-conts'] = [
+configurations['t_conts'] = [
     {
-        't-cont': 0,
+        'tcont_id': 0,
+        'dba_profile_id': '',
     }
 ]
 
@@ -407,9 +408,11 @@ configurations['line_profiles'] = [
         'mapping_mode': 'VLAN',
         'tr069_management': 'disable',
         'tr069_ip_index': '0',
-        't-conts': [0,1],
+        't_conts': [],
     },
 ]
+
+configurations["gem"] = []
 
 
 configurations['frames'][0]['slots'] = [
@@ -420,56 +423,7 @@ configurations['frames'][0]['slots'] = [
         'status': 'Normal',
         'subtype0': '',
         'subtype1': '',
-        'ports': [[
-            {
-                **random.choice(ont_states),
-                'ont_id': i,
-                'description': s.bare_bone_with_adjective(),
-                'sn': ''.join(random.choices(string.ascii_uppercase + string.digits, k=16)),
-                'registered': random.choice([True, False]),
-                'is_epon': False,
-                'oui_version': 'CTC3.0',
-                'model': '240',
-                'extended_model': 'HG8240',
-                'nni_type': 'auto',
-                'actual_nni_type': 'auto',
-                'last_actual_nni_type': 'auto',
-                'password': '0x303030303030303030300000000000000000000000000000000000000000000000000000(0000000000)',
-                'loid': '000000000000000000000000',
-                'checkcode': '000000000000',
-                'vendor_id': 'HWTC',
-                'version': 'MXU VER.A',
-                'software_version': 'V8R017C00',
-                'hardware_version': '140C4510',
-                'equipment_id': "MXU",
-                'customized_info': '',
-                'mac': get_random_mac(),
-                'equipment_sn': '',
-                'multi-channel': 'Not support',
-                'llid': '',
-                'distance_m': random.randint(10, 90),
-                'last_distance_m': random.randint(10, 90),
-                'rtt_tq': '',
-                'memory_occupation': random.randint(10, 90),
-                'cpu_occupation': random.randint(10, 90),
-                'temperature': random.randint(30,60),
-                'authentic_type': 'MAC-auth',
-                'management_mode': random.choices(['OMCI', 'OAM']),
-                'software_work_mode': 'normal',
-                'multicast_mode': 'IGMP-Snooping',
-                'last_down_cause': 'dying-gasp',
-                'type_d_support': 'Not support',
-                'isolation_state': 'normal',
-                'interoperability_mode': 'unknown',
-                'fec_upstream_state': 'disable',
-                'vs_id': 0,
-                'vs_name': 'admin-vs',
-                'global_ont_id': next(ont_global_id),
-                'fiber_route': '',
-                'line_profile_id': random.randint(0, 10),
-                'line_profile_name': '',
-            } for i in range(random.randint(1,32))
-        ] for j in range(gpon_boards[gpon_board])]
+        'ports': [],
     },
     {
         'boardname': '',
@@ -521,7 +475,66 @@ configurations['frames'][0]['slots'] = [
     }
 ]
 
-
+for i in range(gpon_boards[gpon_board]):
+    registered = 0
+    onts = []
+    for _ in range(random.randint(1, 32)):
+        register = False
+        if i == 6:
+            if random.random() < 0.2:
+                registered += 1
+                register = True
+        elif random.random() < 0.8:
+            registered += 1
+            register = True
+        ont = {
+            **random.choice(ont_states),
+            'ont_id': registered if register else '',
+            'description': s.bare_bone_with_adjective(),
+            'sn': ''.join(random.choices(string.ascii_uppercase + string.digits, k=16)),
+            'registered': register,
+            'is_epon': False,
+            'oui_version': 'CTC3.0',
+            'model': '240',
+            'extended_model': 'HG8240',
+            'nni_type': 'auto',
+            'actual_nni_type': 'auto',
+            'last_actual_nni_type': 'auto',
+            'password': '0x303030303030303030300000000000000000000000000000000000000000000000000000(0000000000)',
+            'loid': '000000000000000000000000',
+            'checkcode': '000000000000',
+            'vendor_id': 'HWTC',
+            'version': 'MXU VER.A',
+            'software_version': 'V8R017C00',
+            'hardware_version': '140C4510',
+            'equipment_id': "MXU",
+            'customized_info': '',
+            'mac': get_random_mac(),
+            'equipment_sn': '',
+            'multi-channel': 'Not support',
+            'llid': '',
+            'distance_m': random.randint(10, 90),
+            'last_distance_m': random.randint(10, 90),
+            'rtt_tq': '',
+            'memory_occupation': random.randint(10, 90),
+            'cpu_occupation': random.randint(10, 90),
+            'temperature': random.randint(30,60),
+            'authentic_type': 'SN-auth',
+            'management_mode': 'OMCI',
+            'software_work_mode': 'normal',
+            'multicast_mode': 'IGMP-Snooping',
+            'last_down_cause': 'dying-gasp',
+            'type_d_support': 'Not support',
+            'isolation_state': 'normal',
+            'interoperability_mode': 'unknown',
+            'vs_id': 0,
+            'vs_name': 'admin-vs',
+            'global_ont_id': next(ont_global_id),
+            'fiber_route': '',
+            'line_profile_id': 0,
+        }
+        onts.append(ont)
+    configurations['frames'][0]['slots'][0]['ports'].append(onts)
 
 
 with open('huawei_smartax.yaml.j2', 'w', encoding='utf-8') as f:

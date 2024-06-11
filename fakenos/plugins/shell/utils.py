@@ -44,10 +44,10 @@ def change_jinja_to_corresponding_py(files: List[str]):
             base_filepath = filepath.rsplit("/", 2)[0]
             platform = os.path.basename(filepath).replace(".yaml.j2", "").replace(".yaml", "")
             files.add(f"{base_filepath}/{platform}.py")
-        else:
-            split: List[str] = filepath.rsplit("/", 3)
-            corresponding_py_module = f"{split[0]}/{split[2]}.py"
-            files.add(corresponding_py_module)
+        # else:
+        #     split: List[str] = filepath.rsplit("/", 3)
+        #     corresponding_py_module = f"{split[0]}/{split[2]}.py"
+        #     files.add(corresponding_py_module)
     return list(files)
 
 

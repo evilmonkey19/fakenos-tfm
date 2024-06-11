@@ -1,0 +1,8 @@
+  -----------------------------------------------------------------------------
+  Profile-ID  Profile-name                                Binding times
+  -----------------------------------------------------------------------------
+  {% for line_profile in line_profiles -%}
+  {{line_profile.profile_id}}  {{line_profile.profile_name}}    {{line_profile.binding_times}}
+  {% endfor -%}
+  -----------------------------------------------------------------------------
+  Total: {{line_profiles|length}}

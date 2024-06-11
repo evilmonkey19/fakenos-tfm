@@ -204,6 +204,7 @@ class Nos:
         """
         spec = importlib.util.spec_from_file_location("module.name", filename)
         module = importlib.util.module_from_spec(spec)
+
         spec.loader.exec_module(module)
         self.name = getattr(module, "NAME", self.name)
         self.commands.update(getattr(module, "commands", self.commands))

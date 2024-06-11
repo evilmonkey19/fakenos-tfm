@@ -78,6 +78,7 @@ class CMDShell(Cmd):
         }
         regexes = {regex.replace("[", "(").replace("]", ")?"): value for regex, value in regexes.items()}
         regexes = {regex.replace("\\S+", "(.*)"): value for regex, value in regexes.items()}
+        regexes = {'^' + regex + '$': value for regex, value in regexes.items()}
         return {re.compile(regex): value for regex, value in regexes.items()}
 
     def start(self):
@@ -149,8 +150,10 @@ class CMDShell(Cmd):
         if prompt_ is None:
             return True
         if isinstance(prompt_, str):
-            return self.prompt == prompt_.format(base_prompt=self.base_prompt)
-        return any(self.prompt == i.format(base_prompt=self.base_prompt) for i in prompt_)
+            prompt_ = [prompt_]
+        prompt_ = [i.replace('(', '\\(').replace(")", "\\)") for i in prompt_]
+        prompt_ = [i.format(base_prompt=self.base_prompt) for i in prompt_]
+        return any(re.search(i, self.prompt) for i in prompt_)
 
     def get_match_command_and_args(self, line: str) -> Union[Tuple[str, List], Tuple[None, None]]:
         """ Method that checks if the line matches any regex """

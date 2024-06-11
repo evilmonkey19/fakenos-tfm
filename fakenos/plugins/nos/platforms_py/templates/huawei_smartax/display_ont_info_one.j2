@@ -13,7 +13,11 @@
   CPU occupation          : {{ cpu_occupation or '-' }}
   Temperature             : {{ temperature or '-' }}
   Authentic type          : {{ authentic_type or '-' }}
+  {% if authentic_type == 'SN-auth' -%}
+  SN                      : {{ sn or '-' }}
+  {% else -%}
   MAC                     : {{ mac or '-' }}
+  {% endif -%}
   Management mode         : {{ management_mode or '-' }}
   Software work mode      : {{ software_work_mode or '-' }}
   Multicast mode          : {{ multicast_mode or '-' }}
@@ -35,19 +39,29 @@
   Global ONT-ID           : {{ global_ont_id }}
   Fiber route             : {{ Fiber_route or 'none'}}
   -----------------------------------------------------------------------------
-  Line profile ID      : 8
-  Line profile name    : line-profile_8
+  Line profile ID      : {{ profile_id }}
+  Line profile name    : {{ profile_name }}
   -----------------------------------------------------------------------------
-  Notes: * indicates configured by the discrete command
+  FEC upstream switch :{{ fec_upstream_switch|capitalize }}
+  OMCC Encrypt switch :{{ omcc_encrypt_switch|capitalize }}
+  Qos mode            :{{ qos_mode|capitalize }}
+  Mapping mode        :{{ mapping_mode|capitalize }}
+  Tr069 management    :{{ tr069_management|capitalize }}
   -----------------------------------------------------------------------------
-  FEC switch          :Disable
-  Encrypt type        :off
-  DBA Profile-ID      :8
-  Traffic-table-index :6
-  Traffic-table-name  :ip-traffic-table_6
-  TR069 IP index      :0
-  Dba-threshold       :
+  Notes: * indicates Discrete TCONT(TCONT Unbound)
   -----------------------------------------------------------------------------
+  {% for t_cont in t_conts -%}
+  <T-CONT   {{tcont.tcont_id }}>          DBA Profile-ID:{{ tcont.dba_profile_id }}
+  {% endfor -%}
+
+
+
+
+
+
+
+
+-------------------------------------------------------------------------------
   Queue-set-index  Q1    Q2    Q3    Q4    Q5    Q6    Q7    Q8
   -----------------------------------------------------------------------------
     1                -     -     -     -     -     -     -     -

@@ -1,7 +1,5 @@
-{% if gpon_onts %}
-  ---------------------------------------------------------------------------- 
-  {% for ont in gpon_onts %}
-  Number              : {{ loop.index + 1 }}
+  {% if gpon_onts %}---------------------------------------------------------------------------- 
+{% for ont in gpon_onts %}  Number              : {{ loop.index - 1 }}
   F/S/P               : {{ ont.fsp }}
   ONT NNI type        : {{ ont.nni_type }}
   Ont SN              : {{ ont.sn }} ({{ ont.vendor_id }}-{{ ont.sn[:8] }})
@@ -28,9 +26,7 @@
   Ont autofind time   : {{ ont.autofind_time }}
   Multi channel       : {{ ont.multi_channel }}
   ----------------------------------------------------------------------------
-{% endfor %}
-  The number of GPON autofind ONT is {{ gpon_onts | length }}
-{% endif %}
+{% endfor %}  The number of GPON autofind ONT is {{ gpon_onts | length }}{% endif %}
 {% if epon_onts %}
   ----------------------------------------------------------------------------
   {% for ont in epon_onts %}
