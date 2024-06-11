@@ -27,8 +27,8 @@ interface gpon 0/0
 
 display ont autofind 6
 
-ont add 6 sn-auth QADE441BEU2JKGSE omci ont-lineprofile-id 500 ont-srvprofile-id 500 desc New_link
+ont add 6 sn-auth Y99CF958MN8KXL0E omci ont-lineprofile-id 500 ont-srvprofile-id 500 desc New_link
 
-display ont info 6 2
+display ont info 6 1
 [ "control_flag": active, "run_state": online, "config_state": normal, "match_state": match]
 

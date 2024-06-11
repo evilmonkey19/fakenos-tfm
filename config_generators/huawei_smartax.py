@@ -393,7 +393,8 @@ configurations['dba_profiles'] = [
 configurations['t_conts'] = [
     {
         'tcont_id': 0,
-        'dba_profile_id': '',
+        'dba_profile_id': 1,
+        'gems': [],
     }
 ]
 
@@ -412,7 +413,7 @@ configurations['line_profiles'] = [
     },
 ]
 
-configurations["gem"] = []
+configurations["gems"] = []
 
 
 configurations['frames'][0]['slots'] = [

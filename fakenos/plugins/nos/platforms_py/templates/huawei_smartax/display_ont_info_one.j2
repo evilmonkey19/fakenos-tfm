@@ -39,19 +39,35 @@
   Global ONT-ID           : {{ global_ont_id }}
   Fiber route             : {{ Fiber_route or 'none'}}
   -----------------------------------------------------------------------------
-  Line profile ID      : {{ profile_id }}
-  Line profile name    : {{ profile_name }}
+  Line profile ID      : {{ line_profile.profile_id }}
+  Line profile name    : {{ line_profile.profile_name }}
   -----------------------------------------------------------------------------
-  FEC upstream switch :{{ fec_upstream_switch|capitalize }}
-  OMCC Encrypt switch :{{ omcc_encrypt_switch|capitalize }}
-  Qos mode            :{{ qos_mode|capitalize }}
-  Mapping mode        :{{ mapping_mode|capitalize }}
-  Tr069 management    :{{ tr069_management|capitalize }}
+  FEC upstream switch :{{ line_profile.fec_upstream_switch|capitalize }}
+  OMCC Encrypt switch :{{ line_profile.omcc_encrypt_switch|capitalize }}
+  Qos mode            :{{ line_profile.qos_mode|capitalize }}
+  Mapping mode        :{{ line_profile.mapping_mode|capitalize }}
+  Tr069 management    :{{ line_profile.tr069_management|capitalize }}
   -----------------------------------------------------------------------------
   Notes: * indicates Discrete TCONT(TCONT Unbound)
   -----------------------------------------------------------------------------
-  {% for t_cont in t_conts -%}
+  {% for tcont in t_conts -%}
   <T-CONT   {{tcont.tcont_id }}>          DBA Profile-ID:{{ tcont.dba_profile_id }}
+  {% if tcont.gems|length > 0 -%}
+  {% for gem in tcont.gems -%}
+    <Gem Index {{ gem.gem_index }}>
+    ------------------------------------------------------------------------
+    |Serv-Type:{{gem.service_type.upper}} |Encrypt:{{gem.encrypt}} |Cascade:{{gem.cascade}} |GEM-CAR:{{gem.gem_car or '-'}}      |
+    |Upstream-priority-queue:{{gem.upstream_priority_queue or '-'}} |Downstream-priority-queue:{{gem.downstream_priority_queue or '-'}} |
+    ------------------------------------------------------------------------
+     Mapping VLAN  Priority Port   Port  Bundle  Flow  Transparent
+     index                  type   ID    ID      CAR
+     ------------------------------------------------------------------------
+     {% for mapping in gem.mappings -%}
+      {{str(mapping.mapping_index).ljust(7)}} {{mapping.mapping_type.ljust(4)}} {{mapping.priority.ljust(8)}} {{mapping.port_type.ljust(4)}} {{mapping.port_id.ljust(4)}} {{mapping.bundle_id.ljust(8)}} {{mapping.flow_car.ljust(5)}} {{mapping.transparent.ljust(10)}}
+     {% endfor -%}
+     ------------------------------------------------------------------------
+  {% endfor -%}
+  {% endif -%}
   {% endfor -%}
 
 

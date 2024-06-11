@@ -253,11 +253,13 @@ class HuaweiSmartAX(BaseDevice):
                 return "The ONT does not exist in the port."
             ont['fsp'] = f"{frame_index}/ {board_index}/{port_index}"
             line_profile = next((line_profile for line_profile in self.configurations["line_profiles"] if line_profile["profile_id"] == ont["line_profile_id"]), None)
-            t_conts = [t_cont for t_cont in self.configurations["t_conts"] if line_profile["t-conts"]]
+            t_conts = [t_cont for t_cont in self.configurations["t_conts"] if line_profile["t_conts"]]
+            for t_cont in t_conts:
+                t_cont["gems"] = [gem for gem in self.configurations["gems"] if gem["gem_id"] in t_cont["gems"]]
             return self.render(
                 "huawei_smartax/display_ont_info_one.j2", 
                 **ont,
-                **line_profile,
+                line_profile=line_profile,
                 t_conts=t_conts,
                 )
         except (IndexError, ValueError):
@@ -477,7 +479,7 @@ class HuaweiSmartAX(BaseDevice):
             'mapping_mode': 'VLAN',
             'tr069_management': 'disable',
             'tr069_ip_index': 0,
-            't-conts': '',
+            't_conts': [],
         }
         self.changing_config["line_profiles"].append(new_line_profile)
         ont_lineprofile_prompt = "{base_prompt}(config-gpon-lineprofile-{profile_id})#"
@@ -497,12 +499,12 @@ class HuaweiSmartAX(BaseDevice):
         line_profile = next((line_profile for line_profile in self.changing_config["line_profiles"] if line_profile["profile_id"] == ont_lineprofile_id), None)
         if not line_profile:
             return "The line profile does not exist."
-        line_profile["t-conts"] = 
         self.changing_config["t_conts"].append({
             "tcont_id": tcont_id,
             "dba_profile_id": dba_profile_id,
+            "gems": [],
         })
-        
+        line_profile['t_conts'].append(tcont_id)
         return ""
     
     def make_display_ont__lineprofile(self, **kwargs):
@@ -538,13 +540,21 @@ class HuaweiSmartAX(BaseDevice):
         if gem_id < 0 or gem_id > 1023:
             return "Port must be between 0 and 1023"
         tcont_id = int(args[-1])
-        if tcont_id not in [tcont["tcont_id"] for tcont in self.changing_config["t_conts"]]:
+        tcont = next((tcont for tcont in self.changing_config["t_conts"] if tcont["tcont_id"] == tcont_id), None)
+        if not tcont:
             return "The T-CONT does not exist."
-        self.changing_config["gem"].append({
+        self.changing_config["gems"].append({
             "gem_id": gem_id,
             'service_type': 'eth',
+            'encrypt': 'off',
+            'gem_car': '',
+            'cascade': 'off',
             "tcont_id": tcont_id,
+            'upstream_priority_queue': 0,
+            'downstream_priority_queue': None,
+            'mappings': [],
         })
+        tcont["gems"].append(gem_id)
         return ""
 
     
@@ -564,11 +574,19 @@ class HuaweiSmartAX(BaseDevice):
         vlan = int(args[-1])
         if not 1 <= vlan <= 4094:
             return "VLAN must be between 1 and 4094"
-        gem = next((gem for gem in self.changing_config["gem"] if gem["gem_id"] == gem_id), None)
+        gem = next((gem for gem in self.changing_config["gems"] if gem["gem_id"] == gem_id), None)
         if not gem:
             return "The GEM port does not exist."
-        gem["mapping_index"] = mapping_index
-        gem["vlan"] = vlan
+        gem["mappings"].append({
+            'mapping_index': mapping_index,
+            'vlan': vlan,
+            'priority': '',
+            'port_type': '',
+            'port_id': '',
+            'bundle_id': '',
+            'flow_car': '',
+            'transparent': '',
+        })
         return ""
 
     
