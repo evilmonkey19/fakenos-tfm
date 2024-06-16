@@ -9,10 +9,15 @@ commands:
     prompt: "{base_prompt}#"
   enable clipaging:
     output: "Command: disable clipaging\n\rSuccess."
-    new_prompt: "{base_prompt}#"
     help: enters the mmi mode (machine-machine interface)
     prompt:
     - "{base_prompt}#"
+  disable clipaging:
+    output: null
+    help: disable the paging
+    prompt:
+    - "{base_prompt}#"
+
   show arpentry:
     output: ' ARP Aging Time : 20
 

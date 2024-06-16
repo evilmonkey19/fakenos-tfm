@@ -150,6 +150,9 @@ def channel_to_shell_tap(
         if not channel_stdio.channel.active:
             log.error("SSH channel is not active. Exiting.")
             break
+        if channel_stdio.channel.closed:
+            log.error("SSH channel is closed. Exiting.")
+            break
         try:
             if byte == b'\x1b': # arrows
                 channel_stdio.read(2)
@@ -162,6 +165,8 @@ def channel_to_shell_tap(
                 buffer.seek(0)
                 buffer.truncate()
                 log.debug("ssh_server.channel_to_shell_tap sending line to shell: %s", [line])
+                if shell_stdin.closed:
+                    break
                 shell_stdin.write(line)
                 shell_replied_event.clear()
             elif byte == b'\x7f': 

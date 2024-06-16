@@ -174,3 +174,9 @@ commands:
     prompt:
     - "{base_prompt}>"
     - "{base_prompt}#"
+  no paging:
+    output: None
+    help: execute the command "no paging"
+    prompt:
+    - "{base_prompt}>"
+    - "{base_prompt}#"

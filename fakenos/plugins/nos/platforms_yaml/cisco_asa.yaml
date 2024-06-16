@@ -1317,3 +1317,21 @@ commands:
     prompt:
     - "{base_prompt}>"
     - "{base_prompt}#"
+  show curpriv:
+    output: null
+    help: execute the command "show curpriv"
+    prompt:
+    - "{base_prompt}>"
+    - "{base_prompt}#"
+  terminal pager 0:
+    output: null
+    help: execute the command "terminal pager 0"
+    prompt:
+    - "{base_prompt}>"
+    - "{base_prompt}#"
+  configure terminal:
+    output: null
+    help: execute the command "configure terminal"
+    prompt:
+    - "{base_prompt}>"
+    - "{base_prompt}#"

@@ -13,6 +13,12 @@ commands:
     prompt:
     - "{base_prompt}~$"
     - "{base_prompt}#"
+  set terminal width 512:
+    output: set terminal width 512
+    help: set the terminal to max width
+    prompt:
+    - "{base_prompt}~$"
+    - "{base_prompt}#"
   show interfaces:
     output: "Codes: S - State, L - Link, u - Up, D - Down, A - Admin Down\nInterface\
       \        IP Address                        S/L  Description\n---------     \

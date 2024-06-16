@@ -151,7 +151,7 @@ class CMDShell(Cmd):
             return True
         if isinstance(prompt_, str):
             prompt_ = [prompt_]
-        prompt_ = [i.replace('(', '\\(').replace(")", "\\)") for i in prompt_]
+        prompt_ = [i.replace('(', '\\(').replace(")", "\\)").replace("$", "\$") for i in prompt_]
         prompt_ = [i.format(base_prompt=self.base_prompt) for i in prompt_]
         return any(re.search(i, self.prompt) for i in prompt_)
 
