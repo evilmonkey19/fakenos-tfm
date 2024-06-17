@@ -1,7 +1,7 @@
   -------------------------------------------------------------------------
-  {% for title in titles -%}{{ title }}  {% endfor %}
+  SlotID  BoardName  Status          SubType0 SubType1    Online/Offline
   -------------------------------------------------------------------------
   {% for board in boards -%}
-  {{ board.slotid }}  {{ board.boardname }}  {{ board.status }}  {{ board.subtype0 }} {{ board.subtype1}}   {{ board.online_offline }}
+  {{ (board.slotid|string).ljust(6) }}  {{ board.boardname.ljust(9) }}  {{ board.status.ljust(14) }}  {{ board.subtype0.ljust(8) }} {{ board.subtype1.ljust(8) }}    {{ board.online_offline }}
   {% endfor -%}
   -------------------------------------------------------------------------

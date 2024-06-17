@@ -219,6 +219,11 @@ configurations['services'] = [
     },
 ]
 
+configurations['alarm_policies'] = [{
+    'policy_id': 0,
+    'policy_name': 'alarm-policy_0',
+}]
+
 configurations['dba_profiles'] = [
     {
         'profile_id': 0,
@@ -395,6 +400,11 @@ configurations['t_conts'] = [
         'tcont_id': 0,
         'dba_profile_id': 1,
         'gems': [],
+    },
+    {
+        'tcont_id': 1,
+        'dba_profile_id': 2,
+        'gems': [],
     }
 ]
 
@@ -409,11 +419,97 @@ configurations['line_profiles'] = [
         'mapping_mode': 'VLAN',
         'tr069_management': 'disable',
         'tr069_ip_index': '0',
-        't_conts': [],
+        't_conts': [1],
     },
 ]
 
-configurations["gems"] = []
+configurations['srv_profiles'] = [
+    {
+        'profile_id': 1,
+        'profile_name': 'srv-profile_1',
+        'access-type': 'gpon',
+        'ont_ports': {
+            'pots': [{} for _ in range(2)],
+            'eth': [
+                {
+                    'qinqmode': 'unconcern',
+                    'prioritypolicy': 'unconcern',
+                    'inbound': 'unconcern',
+                    'outbound': 'unconcern',
+                    'dscp_mapping_table_index': 0,
+                    'service_type': None,
+                    'index': None,
+                    's__vlan': None,
+                    's__pri': None,
+                    'c__vlan': None,
+                    'c__pri': None,
+                    'encap': None,
+                    's__pri_policy': None,
+                    'igmp__mode': None,
+                    'igmp__vlan': None,
+                    'igmp__pri': None,
+                    'max_mac_count': 'Unlimited',
+                } for _ in range(4)
+            ],
+            'iphost': [{
+                'dscp_mapping_table_index': 0,
+            }],
+            'tdm': [],
+            'moca': [],
+            'catv': [],
+        },
+        'tdm_port_type': 'E1',
+        'tdm_service_type': 'TDMoGem',
+        'mac_learning_function_switch': 'enable',
+        'ont_transparent_function_switch': 'disable',
+        'multicast_forward_mode': 'Unconcern',
+        'multicast_forward_vlan': None,
+        'multicast_mode': 'Unconcern',
+        'upstream_igmp_packet_forward_mode': 'Unconcern',
+        'upstream_igmp_packet_forward_vlan': None,
+        'upstream_igmp_packet_priority': None,
+        'native_vlan_option': 'Concern',
+        'upstream_pq_color_policy': None,
+        'downstream_pq_color_policy': None,
+    }
+]
+
+configurations['srv_profiles'][0]['ont_ports']['eth'][0].update({
+    'qinqmode': 'unconcern',
+    'prioritypolicy': 'unconcern',
+    'inbound': 'unconcern',
+    'outbound': 'unconcern',
+    'dscp_mapping_table_index': 0,
+    'service_type': 'Translation',
+    'index': 1,
+    's__vlan': 100,
+    's__pri': None,
+    'c__vlan': 100,
+    'c__pri': None,
+    'encap': None,
+    's__pri_policy': None,
+})
+
+configurations["gems"] = [{
+    'gem_id': 1,
+    'service_type': 'eth',
+    'encrypt': 'off',
+    'gem_car': '',
+    'cascade': 'off',
+    "tcont_id": 1,
+    'upstream_priority_queue': 0,
+    'downstream_priority_queue': None,
+    'mappings': [{
+        'mapping_index': 1,
+        'vlan': 100,
+        'priority': '',
+        'port_type': '',
+        'port_id': '',
+        'bundle_id': '',
+        'flow_car': '',
+        'transparent': '',
+    }],
+}]
 
 
 configurations['frames'][0]['slots'] = [
@@ -483,14 +579,12 @@ for i in range(gpon_boards[gpon_board]):
         register = False
         if i == 6:
             if random.random() < 0.2:
-                registered += 1
                 register = True
         elif random.random() < 0.8:
-            registered += 1
             register = True
         ont = {
             **random.choice(ont_states),
-            'ont_id': registered if register else '',
+            'ont_id': registered if register else None,
             'description': s.bare_bone_with_adjective(),
             'sn': ''.join(random.choices(string.ascii_uppercase + string.digits, k=16)),
             'registered': register,
@@ -532,8 +626,12 @@ for i in range(gpon_boards[gpon_board]):
             'vs_name': 'admin-vs',
             'global_ont_id': next(ont_global_id),
             'fiber_route': '',
-            'line_profile_id': 0,
+            'line_profile_id': 10,
+            'srv_profile_id': 1,
+            'alarm_policy_id': 0,
         }
+        if register:
+            registered += 1
         onts.append(ont)
     configurations['frames'][0]['slots'][0]['ports'].append(onts)
 

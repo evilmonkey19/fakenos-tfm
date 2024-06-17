@@ -127,36 +127,13 @@ class HuaweiSmartAX(BaseDevice):
         return [title.lower().replace("/", "_") for title in titles]
     
     def make_display_board(self, **kwargs):
-        """
-        Return String of board informationc
-        
-        Example:
-            -------------------------------------------------------------------------
-            SlotID  BoardName  Status          SubType0  SubType1  Online/Offline
-            -------------------------------------------------------------------------
-            0       A123ABCD   Normal                                            
-            1                                                                    
-            2       A123ABCD   Normal                                            
-            3       A123ABCD   Active_normal   CPCF                              
-            4       A123ABCD   Standby_failed  CPCF                Offline       
-            5                                                                    
-            -------------------------------------------------------------------------
-        """
+        """ Return String of board information. """
         args = kwargs['args']
         if not isinstance(args, str) and args.isdigit():
             return "Please provide the frame number correctly."
         args = int(args)
-        titles = ["SlotID", "BoardName", "Status", "SubType0", "SubType1", "Online/Offline"]
-        titles: dict = {title:keyword for title, keyword in zip(titles, self._get_keywords(titles))}
-        boards = [*copy.deepcopy(self.configurations["frames"][args]["slots"])]
-        for title, keyword in titles.items():
-            board_column = [board[keyword] for board in boards]
-            results = self._add_whitespaces_column([title] + board_column, FRAME_SPACING)
-            board_column = results[1:]
-            titles[title] = results[0]
-            for board in boards:
-                board[keyword] = board_column[boards.index(board)]
-        return self.render("huawei_smartax/display_board.j2", titles=titles.values(), boards=boards)
+        boards = copy.deepcopy(self.configurations["frames"][args]["slots"])
+        return self.render("huawei_smartax/display_board.j2", boards=boards)
 
     def make_display_onts(self, **kwargs):
         """ Return the ONTs information 
@@ -185,14 +162,14 @@ class HuaweiSmartAX(BaseDevice):
         if not all(val.isdigit() for val in kwargs['args'].split(" ")):
             return "Please provide the port number correctly."
         if re.match(prompt_config_if_gpon, kwargs["current_prompt"]):
-            pattern = r"^\d+ \d+$"
-            if not re.match(pattern, kwargs['args']):
+            matches_args = re.findall(r'(\d+)', kwargs['args'])
+            if len(matches_args) < 1 or len(matches_args) > 3:
                 return "Please provide the port number correctly."
             matches = re.findall(r'\d+', kwargs['current_prompt'])
             frame = matches[-1]
             slot = matches[-2]
             kwargs["args"] = f"{frame} {slot} {kwargs['args']}"
-        pattern = r"^\d+ \d+ \d+ (\d+)?$"
+        pattern = r"^\d+\s\d+\s\d+\s*(\d+)?$"
         if not re.match(pattern, kwargs['args']):
             return "Please provide the port number correctly."
         if len(kwargs['args'].split(" ")) == 3:
@@ -203,10 +180,6 @@ class HuaweiSmartAX(BaseDevice):
         """ Return the ONTs information in a list format"""    
         try:
             frame_index, board_index, port_index = (int(value) for value in kwargs['args'].split(" "))
-            titles_table_1 = ["F/S/P", "ONT ID", "SN", "Control flag", "Run state", "Config state", "Match state", "Protect side"]
-            titles_table_2 = ["F/S/P", "ONT-ID", "Description"]
-            titles_table_1 = {title:keyword for title, keyword in zip(titles_table_1, self._get_keywords(titles_table_1))}
-            titles_table_2 = {title:keyword for title, keyword in zip(titles_table_2, self._get_keywords(titles_table_2))}
             frame = copy.deepcopy(self.configurations["frames"][frame_index])
             if frame['slots'][board_index]['boardname'] not in GPON_BOARDS:
                 return "The board is not a PON board."
@@ -219,21 +192,7 @@ class HuaweiSmartAX(BaseDevice):
             for ont in onts:
                 ont["f_s_p"] = port
                 ont["ont-id"] = ont["ont_id"]
-            for title, keyword in titles_table_1.items():
-                onts_column = [ont[keyword] for ont in onts]
-                results = self._add_whitespaces_column([title] + onts_column, FRAME_SPACING)
-                onts_column = results[1:]
-                titles_table_1[title] = results[0]
-                for ont in onts:
-                    ont[keyword] = onts_column[onts.index(ont)]
-            for title, keyword in titles_table_2.items():
-                onts_column = [ont[keyword] for ont in onts]
-                results = self._add_whitespaces_column([title] + onts_column, FRAME_SPACING)
-                onts_column = results[1:]
-                titles_table_2[title] = results[0]
-                for ont in onts:
-                    ont[keyword] = onts_column[onts.index(ont)]
-            return self.render("huawei_smartax/display_ont_info_list.j2", port=port, onts=onts)
+            return self.render("huawei_smartax/display_ont_info_list.j2", onts=onts)
         except (IndexError, ValueError):
             return "There are no ONTs in the specified port."
         
@@ -241,7 +200,8 @@ class HuaweiSmartAX(BaseDevice):
         """ Return the ONTs information in a single format"""    
         try:
             frame_index, board_index, port_index, ont_id = (int(value) for value in kwargs['args'].split(" "))
-            frame = copy.deepcopy(self.configurations["frames"][frame_index])
+            configurations = copy.deepcopy(self.configurations)
+            frame = configurations["frames"][frame_index]
             if frame['slots'][board_index]['boardname'] not in GPON_BOARDS:
                 return "The board is not a PON board."
             if port_index >= GPON_BOARDS[frame['slots'][board_index]['boardname']]:
@@ -252,15 +212,19 @@ class HuaweiSmartAX(BaseDevice):
             if not ont:
                 return "The ONT does not exist in the port."
             ont['fsp'] = f"{frame_index}/ {board_index}/{port_index}"
-            line_profile = next((line_profile for line_profile in self.configurations["line_profiles"] if line_profile["profile_id"] == ont["line_profile_id"]), None)
-            t_conts = [t_cont for t_cont in self.configurations["t_conts"] if line_profile["t_conts"]]
+            line_profile = next((line_profile for line_profile in configurations["line_profiles"] if line_profile["profile_id"] == ont["line_profile_id"]), None)
+            t_conts = [t_cont for t_cont in configurations["t_conts"] if line_profile["t_conts"]]
             for t_cont in t_conts:
-                t_cont["gems"] = [gem for gem in self.configurations["gems"] if gem["gem_id"] in t_cont["gems"]]
+                t_cont["gems"] = [gem for gem in configurations["gems"] if gem["gem_id"] in t_cont["gems"]]
+            service_profile = next((service_profile for service_profile in configurations["srv_profiles"] if service_profile["profile_id"] == ont["srv_profile_id"]), None)
+            alarm_policy = next((alarm_policy for alarm_policy in configurations["alarm_policies"] if alarm_policy["policy_id"] == ont["alarm_policy_id"]), None)
             return self.render(
                 "huawei_smartax/display_ont_info_one.j2", 
                 **ont,
                 line_profile=line_profile,
+                service_profile=service_profile,
                 t_conts=t_conts,
+                alarm_policy=alarm_policy,
                 )
         except (IndexError, ValueError):
             return "There are no ONTs in the specified port."
@@ -268,16 +232,7 @@ class HuaweiSmartAX(BaseDevice):
     def make_display_sysman_service_state(self, **kwargs):
         """ Return the sysman service state information """
         services = copy.deepcopy(self.configurations["services"])
-        titles = ["Network service", "Port", "State"]
-        titles: dict = {title:keyword for title, keyword in zip(titles, self._get_keywords(titles))}
-        for title, keyword in titles.items():
-            services_column = [service[keyword] if service[keyword] is not None else "----" for service in services]
-            results = self._add_whitespaces_column([title] + services_column, SERVICES_SPACING)
-            services_column = results[1:]
-            titles[title] = results[0]
-            for service in services:
-                service[keyword] = services_column[services.index(service)]
-        return self.render("huawei_smartax/display_sysman_service_state.j2", titles=list(titles.values()), services=services)
+        return self.render("huawei_smartax/display_sysman_service_state.j2", services=services)
 
     def make_dba__profile_add(self, **kwargs):
         """ Adds a DBA profile with the corresponding parameters. """
@@ -440,7 +395,7 @@ class HuaweiSmartAX(BaseDevice):
             days=days, hours=hours, minutes=minutes, seconds=seconds
         )
     
-    def make_ont__srvprofile_gpon(self, **kwargs):
+    def make_ont__srvprofile(self, **kwargs):
         """ Return the ONT service profile based on the profile id. """
         pattern = r'^(gpon|epon) profile-id \d+ profile-name \S+$'
         if not re.match(pattern, kwargs["args"]):
@@ -449,18 +404,95 @@ class HuaweiSmartAX(BaseDevice):
         new_srv_profile = {
             "profile_id": int(kwargs["args"].split(" ")[2]),
             "profile_name": kwargs["args"].split(" ")[-1],
-            "access-type": kwargs["args"].split(" ")[0],
+            "access_type": kwargs["args"].split(" ")[0],
+            'tdm_port_type': 'E1',
+            'tdm_service_type': 'TDMoGem',
+            'mac_learning_function_switch': 'enable',
+            'ont_transparent_function_switch': 'disable',
+            'multicast_forward_mode': 'Unconcern',
+            'multicast_forward_vlan': None,
+            'multicast_mode': 'Unconcern',
+            'upstream_igmp_packet_forward_mode': 'Unconcern',
+            'upstream_igmp_packet_forward_vlan': None,
+            'upstream_igmp_packet_priority': None,
+            'native_vlan_option': 'Concern',
+            'upstream_pq_color_policy': None,
+            'downstream_pq_color_policy': None,
         }
+        self.changing_config["srv_profiles"].append(new_srv_profile)
         ont_srvprofile_prompt = "{base_prompt}(config-gpon-srvprofile-{profile_id})#"
         prompt = ont_srvprofile_prompt.format(base_prompt=kwargs["base_prompt"], profile_id=new_srv_profile["profile_id"])
         return {"output": "", "new_prompt": prompt}
     
     def make_ont__port(self, **kwargs):
         """ Configure the service profile for the ONT ports. """
+        pattern = r"(pots|eth|tdm|moca|catv) (\d+)"
+        matches = re.findall(pattern, kwargs["args"])
+        if not matches or len(matches) != len(set(m[0] for m in matches)) or \
+            len(matches) != len(kwargs['args'].split(' '))/2:
+            return "Invalid args format"
+        ont_srvprofile_id = int(kwargs["current_prompt"].split("-")[-1].split(")")[0])
+        srv_profile = next((srv_profile for srv_profile in self.changing_config["srv_profiles"] if srv_profile["profile_id"] == ont_srvprofile_id), None)
+        ont_ports = {
+            "pots": [],
+            "eth": [],
+            'iphost': [{
+                'dscp_mapping_table_index': 0,
+            }],
+            "tdm": [],
+            "moca": [],
+            "catv": [],
+        }
+        for port_type, count in matches:
+            for _ in range(int(count)):
+                if port_type == "pots":
+                    ont_ports["pots"].append({})
+                elif port_type == "eth":
+                    ont_ports["eth"].append({
+                        'qinqmode': 'unconcern',
+                        'prioritypolicy': 'unconcern',
+                        'inbound': 'unconcern',
+                        'outbound': 'unconcern',
+                        'dscp_mapping_table_index': 0,
+                        'service_type': None,
+                        'index': None,
+                        's__vlan': None,
+                        's__pri': None,
+                        'c__vlan': None,
+                        'encap': None,
+                        's__pri_policy': None,
+                        'igmp__mode': None,
+                        'igmp__vlan': None,
+                        'igmp__pri': None,
+                        'max_mac_count': 'Unlimited',
+                    })
+                elif port_type == "tdm":
+                    ont_ports["tdm"].append({})
+                elif port_type == "moca":
+                    ont_ports["moca"].append({})
+                elif port_type == "catv":
+                    ont_ports["catv"].append({})
+        srv_profile['ont_ports'] = ont_ports
         return ""
     
     def make_port_vlan(self, **kwargs):
         """ Configure the VLAN for the port. """
+        pattern = r"^(eth)(\d+) (\d+)$"
+        if not re.match(pattern, kwargs["args"]):
+            return "Invalid args format"
+        match = re.findall(pattern, kwargs["args"])
+        ont_srvprofile_id = int(kwargs["current_prompt"].split("-")[-1].split(")")[0])
+        srv_profile = next((srv_profile for srv_profile in self.changing_config["srv_profiles"] if srv_profile["profile_id"] == ont_srvprofile_id), None)
+        srv_profile["ont_ports"][match[0][0]][int(match[0][1])-1].update({
+            "service_type": "Translation",
+            "index": int(match[0][1]),
+            "s__vlan": int(ont_srvprofile_id),
+            "s__pri": None,
+            "c__vlan": int(match[0][2]),
+            'c__pri': None,
+            'encap': None,
+            's__pri_policy': None,
+        })
         return "Set ONT port(s) VLAN configuration, success: 1, failed: 0"
 
     def make_ont__lineprofile(self, **kwargs):
@@ -618,9 +650,10 @@ class HuaweiSmartAX(BaseDevice):
         ont = self._find_ont(onts_autofind_gpon, sn = args.split(" ")[2])
         if ont:
             onts = self.configurations["frames"][0]["slots"][0]["ports"][port]
-            ont["ont_id"] = len([ont for ont in onts if ont.get("registered")])+1
+            ont["ont_id"] = len([ont for ont in onts if ont.get("registered")])
             ont["registered"] = True
             ont["line_profile_id"] = int(args.split(" ")[5])
+            ont["srv_profile_id"] = int(args.split(" ")[7])
             ont["description"] = args.split(" ")[-1]
             ont["control_flag"] = "active"
             ont["run_state"] = "online"
@@ -716,7 +749,7 @@ commands = {
         ],
     },
     "ont-srvprofile": {
-        "output": HuaweiSmartAX.make_ont__srvprofile_gpon,
+        "output": HuaweiSmartAX.make_ont__srvprofile,
         "regex": "ont-srvprof[[ile]] \\S+",
         "help": "Return the ONT service profile based on the profile id.",
         "prompt": [CONFIG_PROMPT],

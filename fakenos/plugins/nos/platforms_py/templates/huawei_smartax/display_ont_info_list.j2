@@ -3,14 +3,14 @@
           ID                     flag        state    state    state    side
   -----------------------------------------------------------------------------
   {% for ont in onts -%}
-  {{ ont.f_s_p }} {{ ont.ont_id }}  {{ ont.sn }}  {{ ont.control_flag }} {{ ont.run_state }}  {{ ont.config_state }}  {{ ont.match_state }} {{ ont.protect_side }}
+  {{ ont.f_s_p.ljust(7) }} {{ (ont.ont_id|string).ljust(3) }}  {{ ont.sn }}  {{ ont.control_flag.ljust(10) }} {{ ont.run_state.ljust(8) }}  {{ ont.config_state.ljust(7) }}  {{ ont.match_state.ljust(8) }} {{ ont.protect_side }}
   {% endfor -%}
   -----------------------------------------------------------------------------
   F/S/P   ONT-ID   Description
   -----------------------------------------------------------------------------
   {% for ont in onts -%}
-  {{ ont.f_s_p }} {{ ont["ont-id"] }}   {{ ont.description }}
+  {{ ont.f_s_p.ljust(7) }} {{ (ont.ont_id|string).ljust(6) }}   {{ ont.description }}
   {% endfor -%}
   -----------------------------------------------------------------------------
-  In port {{ port }}, the total number of ONTs are: {{ onts|length }}, online: {{ onts|selectattr('run_state', 'equalto', 'online ')|list|length }}, offline: {{ onts|selectattr('run_state', 'equalto', 'offline')|list|length }}
+  In port {{ onts[0].f_s_p.ljust(7) }}, the total number of ONTs are: {{ onts|length }}, online: {{ onts|selectattr('run_state', 'equalto', 'online ')|list|length }}, offline: {{ onts|selectattr('run_state', 'equalto', 'offline')|list|length }}
   -----------------------------------------------------------------------------
