@@ -1,5 +1,5 @@
 name: cisco_xr
-initial_prompt: "{base_prompt}>"
+initial_prompt: "{base_prompt}#"
 enable_prompt: "{base_prompt}#"
 config_prompt: "{base_prompt}(config)#"
 commands:
@@ -7,7 +7,7 @@ commands:
     output: 'null'
     new_prompt: "{base_prompt}#"
     help: enter enable mode
-    prompt: "{base_prompt}>"
+    prompt: "{base_prompt}#"
   show interfaces summary:
     output: 'Interface Type          Total    UP       Down     Admin Down
 
@@ -33,7 +33,6 @@ commands:
       '
     help: execute the command "show interfaces summary"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   admin show vm:
     output: 'Wed Mar 14 10:04:35.018 UTC
@@ -177,7 +176,6 @@ commands:
       sysadmin          running       192.0.120.1      NA/NA'
     help: execute the command "admin show vm"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show interfaces:
     output: "Mon Mar 20 17:31:48.208 EDT\nLoopback5 is up, line protocol is up\n \
@@ -328,7 +326,6 @@ commands:
       \ packets\n"
     help: execute the command "show interfaces"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show pim ipv4 interface:
     output: "\nWed Jul 27 17:18:38.018 CST\n\nPIM interfaces in VRF default\nAddress\
@@ -342,7 +339,6 @@ commands:
       \             on   2     30     1     192.0.2.2"
     help: execute the command "show pim ipv4 interface"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   admin show environment fan:
     output: "Sat Mar 10 14:03:31.155 UTC\n===============================================================================\n\
@@ -365,7 +361,6 @@ commands:
       \  8021    8516 \n  "
     help: execute the command "admin show environment fan"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show bgp:
     output: "Wed Jun 20 18:46:11.356 BST\nBGP router identifier 84.38.34.56, local\
@@ -404,7 +399,6 @@ commands:
       \                        5 i\n"
     help: execute the command "show bgp"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show dhcp ipv4 proxy binding:
     output: "\n                                           Lease\n MAC Address    \
@@ -422,7 +416,6 @@ commands:
       \   BOUND      10796      BE1.1543             cust-a 0x1c5cc\n"
     help: execute the command "show dhcp ipv4 proxy binding"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show configuration commit list:
     output: "SNo. Label/ID    User      Line                Client      Time Stamp\n\
@@ -441,7 +434,6 @@ commands:
       \  CLI         Tue May 10 14:18:59 2016\n"
     help: execute the command "show configuration commit list"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show lldp neighbors detail:
     output: "Tue Jan 16 13:49:50.315 AEST\nCapability codes:\n        (R) Router,\
@@ -487,7 +479,6 @@ commands:
       \n\nTotal entries displayed: 5"
     help: execute the command "show lldp neighbors detail"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show rsvp neighbors:
     output: "Global Neighbor: 10.100.100.120\n  Interface Neighbor   Interface   \n\
@@ -495,7 +486,6 @@ commands:
       \  10.100.100.145       FortyGigE0/1/1/0\n"
     help: execute the command "show rsvp neighbors"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show arp:
     output: '
@@ -539,7 +529,6 @@ commands:
       192.168.57.10   -          0c99.6869.0000  Interface  ARPA  MgmtEth0/RP0/CPU0/0'
     help: execute the command "show arp"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show controllers HundredGigabitEthernet:
     output: "Thu Dec 21 06:15:50.979 UTC\nOperational data for interface HundredGigE0/0/0/0:\n\
@@ -603,7 +592,6 @@ commands:
       \ error correction: Disabled"
     help: execute the command "show controllers HundredGigabitEthernet"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show controllers fabric fia errors ingress location:
     output: "********** FIA-0 **********\nCategory: in_error-0\n                 \
@@ -673,7 +661,6 @@ commands:
       \         ni crc32 corrupt                        0\n"
     help: execute the command "show controllers fabric fia errors ingress location"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show mpls ldp neighbor brief:
     output: "Tue Mar  7 14:35:15.185 EST\n\nPeer               GR  NSR  Up Time  \
@@ -685,7 +672,6 @@ commands:
       \        3     0     8     0     57     0    \n\n"
     help: execute the command "show mpls ldp neighbor brief"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show controllers fabric fia drops egress location:
     output: "********** FIA-0 **********\nCategory: eg_drop-0\n                  \
@@ -797,7 +783,6 @@ commands:
       \              Mc vl3 src1 buffer full drp                        0\n"
     help: execute the command "show controllers fabric fia drops egress location"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show cef drops location:
     output: "CEF Drop Statistics\nNode: 0/RSP0/CPU0\n  Unresolved drops     packets\
@@ -843,7 +828,6 @@ commands:
       \            0\n  LISP decap err drops packets :               0\n"
     help: execute the command "show cef drops location"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show bgp vrf all ipv4 unicast summary:
     output: "Tue Mar 21 09:08:19.039 EDT\n\nVRF: DR\n-------\nBGP VRF DR, state: Active\n\
@@ -900,7 +884,6 @@ commands:
       \    0\n"
     help: execute the command "show bgp vrf all ipv4 unicast summary"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show bgp neighbors:
     output: "Sun Nov 11 05:46:16.280 GMT\n\nBGP neighbor is 192.168.100.1\n Remote\
@@ -1208,7 +1191,6 @@ commands:
       \  Peer reset reason: Remote closed the session (No error)\n"
     help: execute the command "show bgp neighbors"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   admin show inventory:
     output: "Name: Rack 0 Descr: ASR-9010 Chassis\nPID: ASR-9010 VID: V01 SN: FOX0000X0XX\n\
@@ -1217,7 +1199,6 @@ commands:
       \ linecard\nPID: A9K-8HG-FLEX-SE VID: V02 SN: FOC0000XXXX\n"
     help: execute the command "admin show inventory"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show controllers fabric fia errors egress location:
     output: "********** FIA-0 **********\nCategory: eg_error-0\n                 \
@@ -1237,7 +1218,6 @@ commands:
       \                      0\n"
     help: execute the command "show controllers fabric fia errors egress location"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show drops np all:
     output: "Node: 0/0/CPU0:\n----------------------------------------------------------------\n\
@@ -1312,7 +1292,6 @@ commands:
       \  \n----------------------------------------------------------------\n"
     help: execute the command "show drops np all"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show ospf vrf all neighbor:
     output: "\nWed Jul 27 17:18:33.921 CST\n\n* Indicates MADJ interface\n# Indicates\
@@ -1335,7 +1314,6 @@ commands:
       \    Neighbor is up for 35w1d\n\nTotal neighbor count: 2\n"
     help: execute the command "show ospf vrf all neighbor"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show hsrp:
     output: "Fri May 17 20:29:32.108 UTC\n\nIPv4 Groups:\n\n                     \
@@ -1347,7 +1325,6 @@ commands:
       \   Group addr\n"
     help: execute the command "show hsrp"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show controllers hundredgige all:
     output: "Operational data for interface HundredGigE0/0/0/0:\n\nState:\n    Administrative\
@@ -3985,7 +3962,6 @@ commands:
       \ (Reg 0xa44e=0x0000) (Reg 0xa44f=0x0000) \n(Reg 0xa450=0x0000) \n"
     help: execute the command "show controllers hundredgige all"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show bgp instance all summary:
     output: "\nWed Jul 27 17:18:35.642 CST\n\nBGP instance 0: 'default'\n=========================\n\
@@ -4011,7 +3987,6 @@ commands:
       \   0    0    45w1d Idle!\n"
     help: execute the command "show bgp instance all summary"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show ipv4 interface:
     output: "Mon Feb 13 17:30:47.464 UTC\nMgmtEth0/0/CPU0/0 is Up, ipv4 protocol is\
@@ -4026,7 +4001,6 @@ commands:
       \ processing disabled\n"
     help: execute the command "show ipv4 interface"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show ip interface brief:
     output: 'Interface                      IP-Address      Status          Protocol
@@ -4047,7 +4021,6 @@ commands:
       '
     help: execute the command "show ip interface brief"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show isis neighbors:
     output: 'Tue Jan  3 14:57:35.234 UTC
@@ -4071,7 +4044,6 @@ commands:
       '
     help: execute the command "show isis neighbors"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show bfd sessions:
     output: "Interface           Dest Addr           Local det time(int*mult)    \
@@ -4093,7 +4065,6 @@ commands:
       \        No    n/a            \n"
     help: execute the command "show bfd sessions"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show interface brief:
     output: "\n               Intf       Intf        LineP              Encap  MTU\
@@ -4206,7 +4177,6 @@ commands:
       \  admin-down  admin-down               ARPA  1514   40000000"
     help: execute the command "show interface brief"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show ipv6 neighbors:
     output: "Fri Oct 11 02:35:25.149 UTC\nIPv6 Address                           \
@@ -4230,7 +4200,6 @@ commands:
       \        0/0/CPU0       \n"
     help: execute the command "show ipv6 neighbors"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show install active:
     output: "Mon Feb 28 23:36:31.563 CET\nLabel : 7.3.2\n\nNode 0/RP0/CPU0 [RP]\n\
@@ -4276,7 +4245,6 @@ commands:
       \        ncs5500-infra-5.0.0.5-r732.CSCvu13993\n        ncs5500-ospf-3.0.0.0-r732\n"
     help: execute the command "show install active"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show redundancy summary:
     output: "Tue Mar  7 14:33:54.330 EST\n  Active/Primary   Standby/Backup\n  --------------\
@@ -4284,7 +4252,6 @@ commands:
       \  0/RSP0/CPU0(P)   0/RSP1/CPU0(B) (Proc Group Ready, NSR: Ready)\n"
     help: execute the command "show redundancy summary"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show pim ipv4 group-map:
     output: "\nWed Jul 27 17:18:36.472 CST\n\nIP PIM Group Mapping Table\n(* indicates\
@@ -4296,7 +4263,6 @@ commands:
       \      0.0.0.0         RPF: Null,0.0.0.0"
     help: execute the command "show pim ipv4 group-map"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show cdp neighbors detail:
     output: "-------------------------\nDevice ID: nyc-dc-dcm005.ntc.com\nSysName\
@@ -4436,7 +4402,6 @@ commands:
       \ version: 2\nDuplex: full\n\n"
     help: execute the command "show cdp neighbors detail"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show asic-errors all location:
     output: "************************************************************\n*     \
@@ -4480,7 +4445,6 @@ commands:
       \ count   : 0\n--------------------\n"
     help: execute the command "show asic-errors all location"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show inventory:
     output: "Tue Jan 16 13:30:53.501 AEST\n\nNAME: \"Rack 0\", DESCR: \"Cisco 8200\
@@ -4511,7 +4475,6 @@ commands:
       \ Port-side Air Intake\"\nPID: PSU2KW-ACPI       , VID: V01 , SN: POG27ABCDEF\n"
     help: execute the command "show inventory"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show controller fabric plane all:
     output: 'Sun Feb  25 06:32:34.404 UTC
@@ -4536,7 +4499,6 @@ commands:
       5     UP    UP             0         0'
     help: execute the command "show controller fabric plane all"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show vrf all detail:
     output: "\nWed Jul 27 17:18:32.001 CST\n\nVRF red; RD not set; VPN ID not set\n\
@@ -4584,7 +4546,6 @@ commands:
       \ policy\n"
     help: execute the command "show vrf all detail"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   admin show platform:
     output: "Tue Mar  7 14:29:29.338 EST\nNode            Type                   \
@@ -4596,7 +4557,6 @@ commands:
       \               PWR,NSHUT,MON\n"
     help: execute the command "admin show platform"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show platform summary location all:
     output: "\nWed Jul 27 17:18:08.328 CST\n-------------------------------------------------------------------------------\n\
@@ -4644,7 +4604,6 @@ commands:
       \       Faults : N/A\n-------------------------------------------------------------------------------"
     help: execute the command "show platform summary location all"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   admin show environment power:
     output: "Fri Jan 17 14:45:54.414 EST\n================================================================================\n\
@@ -4685,7 +4644,6 @@ commands:
       \       ON \n"
     help: execute the command "admin show environment power"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show pim neighbor:
     output: "Tue Mar  7 14:37:03.743 EST\n\nPIM neighbors in VRF default\nFlag: B\
@@ -4698,7 +4656,6 @@ commands:
       \       4w2d      00:01:27 1      B P\n\n"
     help: execute the command "show pim neighbor"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show controllers all phy:
     output: "PHY data for interface: TenGigE0/0/0/0\n\nSFP EEPROM  port: 0\n     \
@@ -5099,7 +5056,6 @@ commands:
       \ 00\n0x0170: 05 40 00 00 05 40 00 00 : ff ff ff ff ff ff ff 01\n"
     help: execute the command "show controllers all phy"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show ospf vrf all interface brief:
     output: '
@@ -5141,7 +5097,6 @@ commands:
       '
     help: execute the command "show ospf vrf all interface brief"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   admin show controller fabric health:
     output: "Sat Feb 24 18:07:38.753 UTC\n\nFabric System Health\n---------------------\n\
@@ -5173,7 +5128,6 @@ commands:
       \        72    \n    --------------------------------------\n"
     help: execute the command "admin show controller fabric health"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show lpts pifib hardware police location:
     output: "-------------------------------------------------------------\n     \
@@ -5324,7 +5278,6 @@ commands:
       \ 25 18:56:24 2700\n"
     help: execute the command "show lpts pifib hardware police location"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show ip bgp summary:
     output: "Mon Dec 18 11:13:26.959 UTC\nBGP router identifier 30.67.35.78, local\
@@ -5342,7 +5295,6 @@ commands:
       \ 0 64727   72363   74575    94623    0    0    4d10h         82"
     help: execute the command "show ip bgp summary"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show ospf neighbor:
     output: "Mon Jan  2 16:12:20.544 UTC\n\n* Indicates MADJ interface\n# Indicates\
@@ -5357,7 +5309,6 @@ commands:
       \ Total neighbor count: 4\n"
     help: execute the command "show ospf neighbor"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show controllers fabric fia drops ingress location:
     output: "********** FIA-0 **********\nCategory: in_drop-0\n                  \
@@ -5470,7 +5421,6 @@ commands:
       \                    0\n"
     help: execute the command "show controllers fabric fia drops ingress location"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   dir:
     output: "Tue Jan 16 17:08:43.028 AEST\n\nDirectory of /var/xr/scratch\n74 drwxrwxrwx.\
@@ -5487,7 +5437,6 @@ commands:
       \ kbytes free)"
     help: execute the command "dir"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show ipv4 vrf all interface brief:
     output: '
@@ -5534,7 +5483,6 @@ commands:
       '
     help: execute the command "show ipv4 vrf all interface brief"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show ip route:
     output: "Mon Jan 29 19:00:32.892 UTC\nVRF: example555\n\n\nCodes: C - connected,\
@@ -5613,7 +5561,6 @@ commands:
       \ vrf default), 1w5d\n\n\nVRF: customerA\n\n\n% No matching routes found\n\n"
     help: execute the command "show ip route"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show pim ipv4 neighbor:
     output: "\nWed Jul 27 17:18:37.203 CST\n\nPIM neighbors in VRF default\nFlag:\
@@ -5629,7 +5576,6 @@ commands:
       \                  2y51w     00:01:25 1      B"
     help: execute the command "show pim ipv4 neighbor"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   ping:
     output: 'Fri Dec 22 17:30:39.512 BRA
@@ -5645,7 +5591,6 @@ commands:
       '
     help: execute the command "ping"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show processes cpu:
     output: 'Thu Mar 23 17:16:01.625 EDT
@@ -6423,7 +6368,6 @@ commands:
       48337277   0%      0%       0% 48337277_unknown'
     help: execute the command "show processes cpu"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show version brief:
     output: "\nWed Jul 27 17:17:42.915 CST\n\nCisco IOS XR Software, Version 5.3.2[Default]\n\
@@ -6439,7 +6383,6 @@ commands:
       \ (Sector size 512 bytes)."
     help: execute the command "show version brief"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show lldp neighbors:
     output: "Mon Jan 29 19:06:33.768 UTC\nCapability codes:\n        (R) Router, (B)\
@@ -6450,7 +6393,6 @@ commands:
       \        R               Gi0/0/0/2\n\nTotal entries displayed: 2\n"
     help: execute the command "show lldp neighbors"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   show version:
     output: "Cisco IOS XR Software, Version 4.1.0[Default]\nCopyright (c) 2010 by\
@@ -6470,26 +6412,22 @@ commands:
       \ for pie\n"
     help: execute the command "show version"
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   terminal width 511:
     output: null
     help: Execute the command terminal width 511. This automatically generated. Feel
       free to change it!
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   terminal length 0:
     output: null
     help: Execute the command terminal length 0. This automatically generated. Feel
       free to change it!
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"
   terminal width 512:
     output: null
     help: Execute the command terminal width 512. This automatically generated. Feel
       free to change it!
     prompt:
-    - "{base_prompt}>"
     - "{base_prompt}#"

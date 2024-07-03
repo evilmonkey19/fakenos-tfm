@@ -1335,3 +1335,9 @@ commands:
     prompt:
     - "{base_prompt}>"
     - "{base_prompt}#"
+  terminal width 511:
+    output: null
+    help: execute the command "terminal width 511"
+    prompt:
+    - "{base_prompt}>"
+    - "{base_prompt}#"

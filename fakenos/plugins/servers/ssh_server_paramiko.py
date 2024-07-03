@@ -19,6 +19,7 @@ from fakenos.core.nos import Nos
 from fakenos.core.servers import TCPServerBase
 
 log = logging.getLogger(__name__)
+print(f"Loaded {__name__}")
 
 DEFAULT_SSH_KEY = """-----BEGIN RSA PRIVATE KEY-----
 MIIEogIBAAKCAQEAnahBtR7uxtHmk5UwlFfpC/zxdxjUKPD8UpNOOtIJwpei7gaZ
@@ -122,6 +123,7 @@ class TapIO(io.StringIO):
         """method to readline in indefinite block mode"""
         while self.run_srv.is_set():
             if self.lines:
+                print(self.lines)
                 return self.lines.pop(-1)
             time.sleep(0.01)
         return None
