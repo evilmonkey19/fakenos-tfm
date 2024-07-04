@@ -51,7 +51,10 @@ class TCPServerBase(ABC):
 
         self._bind_sockets()
 
-        self._listen_thread = threading.Thread(target=self._listen)
+        self._listen_thread = threading.Thread(
+            name="fakenos_ListenThread",
+            target=self._listen
+        )
         self._listen_thread.start()
 
     def _bind_sockets(self):

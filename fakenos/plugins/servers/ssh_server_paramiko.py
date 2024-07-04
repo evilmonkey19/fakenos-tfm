@@ -19,7 +19,6 @@ from fakenos.core.nos import Nos
 from fakenos.core.servers import TCPServerBase
 
 log = logging.getLogger(__name__)
-print(f"Loaded {__name__}")
 
 DEFAULT_SSH_KEY = """-----BEGIN RSA PRIVATE KEY-----
 MIIEogIBAAKCAQEAnahBtR7uxtHmk5UwlFfpC/zxdxjUKPD8UpNOOtIJwpei7gaZ
@@ -65,6 +64,7 @@ class ParamikoSshServerInterface(paramiko.ServerInterface):
         self.ssh_banner = ssh_banner
         self.username = username
         self.password = password
+        self.event = threading.Event()
 
     def check_channel_request(self, kind, chanid):
         """
@@ -91,6 +91,7 @@ class ParamikoSshServerInterface(paramiko.ServerInterface):
         This allows us to provide the channel
         with a shell we can connect to it.
         """
+        self.event.set()
         return True
 
     def check_auth_password(self, username, password):
@@ -123,7 +124,7 @@ class TapIO(io.StringIO):
         """method to readline in indefinite block mode"""
         while self.run_srv.is_set():
             if self.lines:
-                print(self.lines)
+                log.info(self.lines)
                 return self.lines.pop(-1)
             time.sleep(0.01)
         return None
@@ -312,7 +313,8 @@ class ParamikoSshServer(TCPServerBase):
         session.start_server(server=server)
 
         # create the channel and get the stdio
-        channel = session.accept()
+        channel = session.accept(2)
+        server.event.wait(10)
         channel_stdio = channel.makefile("rw")
 
         # create stdio for the shell
@@ -321,6 +323,7 @@ class ParamikoSshServer(TCPServerBase):
         # start intermediate thread to tap into
         # the channel_stdio->shell_stdin bytes stream
         channel_to_shell_tapper = threading.Thread(
+            name="fakenos_channel_to_shell_tapper",
             target=channel_to_shell_tap,
             args=(channel_stdio, shell_stdin, shell_replied_event, run_srv),
         )
@@ -329,6 +332,7 @@ class ParamikoSshServer(TCPServerBase):
         # start intermediate thread to tap into
         # the shell_stdout->channel_stdio bytes stream
         shell_to_channel_tapper = threading.Thread(
+            name="fakenos_shell_to_channel_tapper",
             target=shell_to_channel_tap,
             args=(channel_stdio, shell_stdout, shell_replied_event, run_srv),
         )
@@ -345,7 +349,11 @@ class ParamikoSshServer(TCPServerBase):
         )
 
         # start watchdog thread
-        watchdog_thread = threading.Thread(target=self.watchdog, args=(is_running, run_srv, session, client_shell))
+        watchdog_thread = threading.Thread(
+            name="fakenos_watchdog",
+            target=self.watchdog,
+            args=(is_running, run_srv, session, client_shell)
+            )
         watchdog_thread.start()
 
         # running this command will block this function until shell exits

@@ -7,7 +7,6 @@ import logging
 import copy
 import socket
 import threading
-import time
 import platform
 from typing import Union, List, Dict, Set
 
@@ -284,13 +283,10 @@ class FakeNOS:
         """
         Method to join threads in case that all hosts are stopped.
         """
-        all_threads = threading.enumerate()
-        for thread in all_threads:
-            if thread is not threading.main_thread() and "pytest_timeout" not in thread.name:
-                thread.join()
-        n_threads: int = 2 if detect.windows else 1
-        while threading.active_count() > n_threads:
-            time.sleep(0.01)
+        fakenos_threads = [thread for thread in threading.enumerate() if "fakenos" in thread.name]
+        print(fakenos_threads)
+        for thread in fakenos_threads:
+            thread.join()
 
     def _execute_function_over_hosts(self, hosts: List[Host], func: str, host_running: bool = True):
         """

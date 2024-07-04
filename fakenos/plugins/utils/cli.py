@@ -36,7 +36,7 @@ opts.add_argument(
     "--log-level",
     action="store",
     dest="LOG_LEVEL",
-    default="INFO",
+    default="DEBUG",
     type=str,
     help="Log level",
 )
