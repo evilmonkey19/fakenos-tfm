@@ -65,6 +65,7 @@ class TCPServerBase(ABC):
         """
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+        print("Binding to", self.address, self.port)
 
         if sys.platform in ["linux"]:
             self._socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, True)

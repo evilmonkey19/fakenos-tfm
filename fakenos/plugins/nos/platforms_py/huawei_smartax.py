@@ -325,7 +325,7 @@ class HuaweiSmartAX(BaseDevice):
                     for port in slot["ports"]:
                         for ont in port:
                             if not ont["registered"]:
-                                ont["fsp"] = f"{frames.index(frame)}/{frame['slots'].index(slot)}/{port.index(ont)}"
+                                ont["fsp"] = f"{frames.index(frame)}/{frame['slots'].index(slot)}/{slot['ports'].index(port)}"
                                 ont["autofind_time"] = autofind_time
                                 onts_autofind.append(ont)
         gpon_onts = [ont for ont in onts_autofind if not ont["is_epon"]]
@@ -666,6 +666,8 @@ class HuaweiSmartAX(BaseDevice):
                     break
             return self.render("huawei_smartax/ont_add_successful.j2", port=port, ont=ont)
         return ""
+
+        # ont add 7 sn-auth WF9UMRRY4OBSD6CK omci ont-lineprofile-id 500 ont-srvprofile-id 500 desc Hola
 
     def _find_ont(self, onts: List[Dict], sn: str) -> Dict:
         """ Find an ONT in the onts list """
