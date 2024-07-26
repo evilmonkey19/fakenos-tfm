@@ -8,8 +8,6 @@ import copy
 import os
 import re
 import random
-import time
-from datetime import datetime
 import datetime
 import random
 from typing import Dict, List
@@ -134,6 +132,18 @@ class HuaweiSmartAX(BaseDevice):
         args = int(args)
         boards = copy.deepcopy(self.configurations["frames"][args]["slots"])
         return self.render("huawei_smartax/display_board.j2", boards=boards)
+    
+    def make_display_cpu(self, **kwargs):
+        """ Return the CPU information """
+        if kwargs['args'] != 'splay':
+            return "Failure: Invalid command."
+        return self.render("huawei_smartax/display_cpu.j2", cpu_usage=self.configurations["cpu_usage"])
+    
+    def make_display_memory(self, **kwargs):
+        """ Return the memory information """
+        if kwargs['args'] != 'splay':
+            return "Failure: Invalid command."
+        return self.render("huawei_smartax/display_memory.j2", memory_usage=self.configurations["memory_usage"])
 
     def make_display_onts(self, **kwargs):
         """ Return the ONTs information 
@@ -372,6 +382,23 @@ class HuaweiSmartAX(BaseDevice):
         if any(re.match(pattern, current_prompt) for pattern in patterns):
             return {"output": None, "new_prompt": CONFIG_PROMPT}
         raise RuntimeError(f"make_quit does not know how to handle '{current_prompt}' prompt")
+
+    def make_display_ont_optical_info(self, **kwargs):
+        """ Return the ONTs optical information """
+        input_pattern = r"^\d+ all$"
+        if not re.match(input_pattern, kwargs['args']):
+            return "Please provide the port number correctly"
+        args = kwargs['args'].split(" ")
+        if args[-1] != 'all':
+            return "Not implemented yet."
+        pattern = r"^\w+\(config-if-gpon-(\d+)?\/(\d+)?\)#$"
+        chassis, board = map(int, re.match(pattern, kwargs["current_prompt"]).groups())
+        ports = self.configurations["frames"][chassis]["slots"][board]["ports"]
+        if int(args[0]) > len(ports):
+            return "The port does not exist."
+        onts = ports[int(args[0])]
+        onts = [ont for ont in onts if ont.get("registered")]
+        return self.render("huawei_smartax/display_ont_optical__info.j2", onts=onts)
 
     def make_display_ont_info_all(self):
         """ Return the ONTs information that are not registered yet. """
@@ -703,6 +730,18 @@ commands = {
         "regex": "di[[splay]] boa[[rd]] \\S+",
         "help": "display board information",
         "prompt": [INITIAL_PROMPT, ENABLE_PROMPT, CONFIG_PROMPT],
+    },
+    "display cpu": {
+        "output": HuaweiSmartAX.make_display_cpu,
+        "regex": "di[[splay]] cpu",
+        "help": "display cpu information",
+        "prompt": [INITIAL_PROMPT, ENABLE_PROMPT, CONFIG_PROMPT],
+    },
+    "display ont optical-info": {
+        "output": HuaweiSmartAX.make_display_ont_optical_info,
+        "regex": "di[[splay]] ont optical-[[info]] \\S+",
+        "help": "display ont optical information",
+        "prompt": [CONFIG_IF_GPON],
     },
     "display ont info": {
         "output": HuaweiSmartAX.make_display_onts,

@@ -1,0 +1,39 @@
+  ----------------------------------------------------------------------------- 
+  ONT  Rx power  Tx power  OLT Rx ONT  Temperature  Voltage  Current  Distance  
+  ID   (dBm)     (dBm)     power(dBm)  (C)          (V)      (mA)     (m)       
+  ----------------------------------------------------------------------------- 
+  {% for ont in onts -%}
+  {{(ont.ont_id|string).rjust(3)}}  {{ (ont.rx_power|string).ljust(8) }}  {{ (ont.tx_power|string).ljust(7) }}  {{ (ont.olt_rx_ont_power|string).ljust(11) }}  {{ (ont.temperature|string).ljust(11) }}  {{ (ont.voltage_v|string).ljust(7) }}  {{ (ont.current_ma|string).ljust(7) }}  {{ (ont.distance_m|string) }}
+  {% endfor -%}-----------------------------------------------------------------------------
+{#
+  ----------------------------------------------------------------------------- 
+  ONT  Rx power  Tx power  OLT Rx ONT  Temperature  Voltage  Current  Distance  
+  ID   (dBm)     (dBm)     power(dBm)  (C)          (V)      (mA)     (m)       
+  ----------------------------------------------------------------------------- 
+    0  -24.68    3.68      -22.68      38           3.200    6        171       
+    1  -24.68    3.86      -23.02      31           3.220    8        170       
+    2  -25.68    3.62      -23.77      32           3.200    8        170       
+    3  -25.37    3.91      -22.45      31           3.180    7        170       
+    4  -25.37    3.76      -22.22      30           3.200    7        170       
+    5  -26.57    3.96      -23.88      38           3.220    8        170       
+    6  -24.68    3.53      -23.47      36           3.260    8        170       
+    7  -25.37    3.71      -23.88      38           3.220    9        170       
+    8  -25.37    3.66      -22.93      30           3.180    5        170       
+    9  -24.43    3.72      -23.77      38           3.200    8        170    
+  -----------------------------------------------------------------------------
+#}
+{#
+Value Key SLOT_ID (\d+)
+Value BOARDNAME (\w*)
+Value STATUS (\S*)
+Value SUBTYPE_0 ([A-Z]{0,8})
+Value SUBTYPE_1 ([A-Z]{0,8})
+Value ONLINE_OFFLINE ((Online|Offline)?)
+
+
+Start
+  ^\s+SlotID\s+BoardName\s+Status\s+SubType0\s+SubType1\s+Online\/Offline
+  ^\s+${SLOT_ID}\s+${BOARDNAME}\s+${STATUS}\s+${SUBTYPE_0}\s+${SUBTYPE_1}\s+${ONLINE_OFFLINE} -> Record
+  ^\s+-
+  ^. -> Error
+#}

@@ -88,7 +88,7 @@ ont_states = [
 
 gpon_boards = {
     'H901XGHDE': 8,
-    'H901OGHK': 48,
+    'H901OGHK': 24,
     'H901NXED': 8,
     'H901OXHD': 8,
     'H902OXHD': 8,
@@ -110,6 +110,8 @@ configurations = {
 
 gpon_board = random.choice(list(gpon_boards))
 
+configurations["memory_usage"] = 50
+configurations["cpu_usage"] = 50
 
 configurations['services'] = [
     {
@@ -629,6 +631,11 @@ for i in range(gpon_boards[gpon_board]):
             'line_profile_id': 10,
             'srv_profile_id': 1,
             'alarm_policy_id': 0,
+            'rx_power': round(random.uniform(-5, -32), 2),
+            'tx_power': round(random.uniform(4, -5), 2),
+            'olt_rx_ont_power': round(random.uniform(-7, -29), 2),
+            'voltage_v': round(random.uniform(3.2, 3.6), 2),
+            'current_ma': random.randint(5, 9),
         }
         if register:
             registered += 1
