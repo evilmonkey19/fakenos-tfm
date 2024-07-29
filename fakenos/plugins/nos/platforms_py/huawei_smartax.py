@@ -565,7 +565,13 @@ class HuaweiSmartAX(BaseDevice):
         if not gemports:
             return "The ONT does not have any gemports."
         gems = [gem for gem in self.configurations["gems"] if gem["gem_id"] in gemports]
-        return self.render("huawei_smartax/display_ont_gemport.j2", gems=gems)
+        fsp = f'{chassis}/{board}/{port}'
+        return self.render(
+            "huawei_smartax/display_ont_gemport.j2", 
+            gems=gems,
+            fsp=fsp,
+            ontid=ontid,
+        )
 
 
     def make_ont__port(self, **kwargs):

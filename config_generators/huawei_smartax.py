@@ -559,7 +559,7 @@ configurations['srv_profiles'][0]['ont_ports']['eth'][0].update({
 
 configurations["gems"] = [{
     'gem_id': 1,
-    'service_type': 'eth',
+    'service_type': 'ethernet',
     'encrypt': 'off',
     'gem_car': '',
     'cascade': 'off',
@@ -579,13 +579,13 @@ configurations["gems"] = [{
 },
 {
     'gem_id': 126,
-    'service_type': 'eth',
+    'service_type': 'ethernet',
     'encrypt': 'off',
     'gem_car': '',
     'cascade': 'off',
     "tcont_id": 4,
-    'upstream_priority_queue': 0,
-    'downstream_priority_queue': None,
+    'upstream_priority_queue': None,
+    'downstream_priority_queue': 'adapt',
     'mappings': [{
         'mapping_index': 0,
         'vlan': 500,
