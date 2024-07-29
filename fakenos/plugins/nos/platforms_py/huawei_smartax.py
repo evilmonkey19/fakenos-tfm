@@ -9,7 +9,6 @@ import os
 import re
 import random
 import datetime
-import random
 from typing import Dict, List
 
 from fakenos.plugins.nos.platforms_py.base_template import BaseDevice
@@ -451,6 +450,124 @@ class HuaweiSmartAX(BaseDevice):
         prompt = ont_srvprofile_prompt.format(base_prompt=kwargs["base_prompt"], profile_id=new_srv_profile["profile_id"])
         return {"output": "", "new_prompt": prompt}
     
+    def make_display_ont_port_vlan(self, **kwargs):
+        """ Display the ONT port VLAN configuration """
+        pattern_byport = r"^(\d+)? (\d+)? byport (eth|iphost|moca|nni-eth|vdsl|wifi)? (\d+)?$"
+        pattern_byvlan = r"^(\d+)? (\d+)? byvlan (\d+)?$"
+        if not re.match(pattern_byport, kwargs['args']) and not re.match(pattern_byvlan, kwargs['args']):
+            return "Please provide the port number correctly"
+        interface_gpon_pattern = r"^\w+\(config-if-gpon-(\d+)?\/(\d+)?\)#$"
+        chassis, board = map(int, re.match(interface_gpon_pattern, kwargs["current_prompt"]).groups())
+        port, ont_id = map(int, re.match(r"^(\d+)? (\d+)?", kwargs["args"]).groups())
+        if port > len(self.configurations["frames"][chassis]["slots"][board]["ports"]):
+            return "The port does not exist."
+        port = self.configurations["frames"][chassis]["slots"][board]["ports"][port]
+        ont = next((ont for ont in port if ont.get("registered") and ont["ont_id"] == ont_id), None)
+        if not ont:
+            return "The ONT does not exist."
+        args = kwargs['args'].split(" ")
+        if args[2] == "byport":
+            port_type, port = re.match(pattern_byport, kwargs['args']).groups()[2:]
+            ont_ports = ont["ports"][port_type][int(port)]
+            ont_ports["port_type"] = port_type
+            ont_ports["port_id"] = port
+            return self.render("huawei_smartax/display_ont_port_vlan_byport.j2", ont_ports=ont_ports)
+        vlan = int(re.match(pattern_byvlan, kwargs['args']).groups()[-1])
+        port_types = ["eth", "iphost", "moca", "nni-eth", "vdsl", "wifi"]
+        ont_ports = []
+        for port_type in port_types:
+            if not port_type in ont["ports"]:
+                continue
+            for port_id, info in ont["ports"][port_type].items():
+                if info["c__vlan"] == vlan:
+                    _ont = ont["ports"][port_type][port_id]
+                    _ont["port_type"] = port_type
+                    _ont["port_id"] = port_id
+                    ont_ports.append(_ont)
+        if not ont_ports:
+            return "The VLAN does not exist in the ONT ports."
+        return self.render("huawei_smartax/display_ont_port_vlan_byvlan.j2", ont_ports=ont_ports)
+        
+    def make_ont_port_native__vlan(self, **kwargs):
+        """ Configure ONT port native VLAN in a port. """
+        input_pattern = r"^(\d+)? (\d+)? eth (\d+)? vlan (\d+)?$"
+        if not re.match(input_pattern, kwargs['args']):
+            return "Please provide the port number correctly"
+        pattern = r"^\w+\(config-if-gpon-(\d+)?\/(\d+)?\)#$"
+        chassis, board = map(int, re.match(pattern, kwargs["current_prompt"]).groups())
+        portid, ontid, ont_portid, vlanid = map(int, re.match(input_pattern, kwargs['args']).groups())
+        if portid > len(self.configurations["frames"][chassis]["slots"][board]["ports"]):
+            return "The port does not exist."
+        onts = self.configurations["frames"][chassis]["slots"][board]["ports"][portid]
+        ont = next((ont for ont in onts if ont.get("registered") and ont["ont_id"] == ontid), None)
+        if not ont:
+            return "The ONT does not exist."
+        ont_ports = ont["ports"]["eth"]
+        if ont_portid not in ont_ports:
+            return "The ONT port does not exist."
+        ont_port = ont_ports[ont_portid]
+        ont_port["native_vlan"] = vlanid
+
+    def make_service__port(self, **kwargs):
+        """ Configure the service port. """
+        pattern = r"^(\d+)? vlan (\d+)? gpon (\d+\/\d+\/\d+)? ont (\d+)? gemport (\d+)? multi-service user-vlan (\d+)? tag-transform translate inbound traffic-table index 1 outbound traffic-table index 1$"
+        if not re.match(pattern, kwargs['args']):
+            return "Please provide the port number correctly"
+        service_portid, vlanid, fsp, ontid, gemportid, uservlanid = re.match(pattern, kwargs['args']).groups()
+        service_portid = int(service_portid)
+        vlanid = int(vlanid)
+        ontid = int(ontid)
+        gemportid = int(gemportid)
+        uservlanid = int(uservlanid)
+        vlan = next((vlan for vlan in self.configurations["vlans"] if vlan == vlanid), None)
+        if not vlan:
+            return "The VLAN does not exist."
+        self.configurations["service_ports"][service_portid] = {
+            "vlan_id": vlanid,
+            "fsp": fsp,
+            "port_type": "gpon",
+            "ont_id": ontid,
+            "gemport_id": gemportid,
+            "flow_type": "vlan",
+            "flow_para": uservlanid,
+            "tag_transform": "translate",
+        }
+        
+
+    def make_display_service__port(self, **kwargs):
+        """ Display the service port information """
+        pattern = r"^(\d+)?$"
+        if not re.match(pattern, kwargs['args']):
+            return "Please provide the port number correctly"
+        port = int(re.match(pattern, kwargs['args']).groups()[0])
+        service_port = copy.deepcopy(self.configurations["service_ports"][port])
+        vlan = self.configurations["vlans"][int(service_port["vlan_id"])]
+        service_port["vlan_attr"] = vlan["attr"]
+        service_port["index"] = port
+        return self.render("huawei_smartax/display_service__port.j2", service_port=service_port)
+
+    def make_display_ont_gemport(self, **kwargs):
+        """ Display the ONT gemport information """
+        pattern = r"^(\d+)? ontid (\d+)?$"
+        if not re.match(pattern, kwargs['args']):
+            return "Please provide the port number correctly"
+        if_config_pattern = r"^\w+\(config-if-gpon-(\d+)?\/(\d+)?\)#$"
+        chassis, board = map(int, re.match(if_config_pattern, kwargs["current_prompt"]).groups())
+        port, ontid = map(int, re.match(pattern, kwargs['args']).groups())
+        if port > len(self.configurations["frames"][chassis]["slots"][board]["ports"]):
+            return "The port does not exist."
+        onts = self.configurations["frames"][chassis]["slots"][board]["ports"][port]
+        onts = [ont for ont in onts if ont.get("registered") and ont["ont_id"] == ontid]
+        ont = next((ont for ont in onts if ont["ont_id"] == ontid), None)
+        if not ont:
+            return "The ONT does not exist."
+        gemports = ont["gemports"]
+        if not gemports:
+            return "The ONT does not have any gemports."
+        gems = [gem for gem in self.configurations["gems"] if gem["gem_id"] in gemports]
+        return self.render("huawei_smartax/display_ont_gemport.j2", gems=gems)
+
+
     def make_ont__port(self, **kwargs):
         """ Configure the service profile for the ONT ports. """
         pattern = r"(pots|eth|tdm|moca|catv) (\d+)"
@@ -500,8 +617,20 @@ class HuaweiSmartAX(BaseDevice):
                 elif port_type == "catv":
                     ont_ports["catv"].append({})
         srv_profile['ont_ports'] = ont_ports
-        return ""
     
+    def make_vlan(self, **kwargs):
+        """ Configure the VLANs. """
+        pattern = r"^(\d+)? smart$"
+        if not re.match(pattern, kwargs["args"]):
+            return "Invalid args format"
+        vlan_id = int(re.match(pattern, kwargs["args"]).groups()[0])
+        if vlan_id in self.configurations["vlans"]:
+            return "The VLAN already exists."
+        self.configurations["vlans"][vlan_id] = {
+            "type": "smart",
+            "attr": "common",
+        }
+
     def make_port_vlan(self, **kwargs):
         """ Configure the VLAN for the port. """
         pattern = r"^(eth)(\d+) (\d+)$"
@@ -777,6 +906,36 @@ commands = {
         "help": "Displays the ONT autofind information.",
         "prompt": [CONFIG_PROMPT, CONFIG_IF_GPON],
     },
+    "display ont port vlan": {
+        "output": HuaweiSmartAX.make_display_ont_port_vlan,
+        "regex": "di[[splay]] ont port vlan \\S+",
+        "help": "Display the ONT port VLAN configuration",
+        "prompt": [CONFIG_IF_GPON],
+    },
+    "display service-port": {
+        "output": HuaweiSmartAX.make_display_service__port,
+        "regex": "di[[splay]] ser[[vice-port]] \\S+",
+        "help": "Display the service port",
+        "prompt": [CONFIG_PROMPT],
+    },
+    "display ont gemport": {
+        "output": HuaweiSmartAX.make_display_ont_gemport,
+        "regex": "di[[splay]] ont gemport \\S+",
+        "help": "Display the ONT GEM port",
+        "prompt": [CONFIG_IF_GPON],
+    },
+    "service-port": {
+        "output": HuaweiSmartAX.make_service__port,
+        "regex": "ser[[vice-port]] \\S+",
+        "help": "Configure the service port",
+        "prompt": [CONFIG_PROMPT],
+    },
+    "ont port native-vlan": {
+        "output": HuaweiSmartAX.make_ont_port_native__vlan,
+        "regex": "ont port native-vlan \\S+",
+        "help": "Configure the native VLAN for the ONT ports.",
+        "prompt": CONFIG_IF_GPON,
+    },
     "quit": {
         "output": HuaweiSmartAX.make_quit,
         "help": "Exit the current level of the CLI",
@@ -800,6 +959,12 @@ commands = {
         "regex": "ont-port \\S+",
         "help": "Configure the service profile for the ONT ports.",
         "prompt": CONFIG_GPON_SRVPROFILE,
+    },
+    "vlan": {
+        "output": HuaweiSmartAX.make_vlan,
+        "regex": "vlan \\S+",
+        "help": "Configure the VLAN",
+        "prompt": CONFIG_PROMPT,
     },
     "port vlan": {
         "output": HuaweiSmartAX.make_port_vlan,

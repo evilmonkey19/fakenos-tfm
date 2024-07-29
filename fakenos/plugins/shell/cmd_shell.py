@@ -221,8 +221,9 @@ class CMDShell(Cmd):
         """ Method to send the response correctly. """
         try:
             final_response = response.format(base_prompt=self.base_prompt)
-        except KeyError:
+        except (KeyError, ValueError, TypeError):
             log.error("Error in formatting output")
+            final_response = "An error has ocurred"
         self.writeline(final_response)
 
     def default(self, line):

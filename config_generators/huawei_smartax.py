@@ -407,6 +407,11 @@ configurations['t_conts'] = [
         'tcont_id': 1,
         'dba_profile_id': 2,
         'gems': [],
+    },
+    {
+        'tcont_id': 4,
+        'dba_profile_id': 5,
+        'gems': [126],
     }
 ]
 
@@ -423,6 +428,18 @@ configurations['line_profiles'] = [
         'tr069_ip_index': '0',
         't_conts': [1],
     },
+    {
+        'profile_id': 500,
+        'profile_name': 'new_link',
+        'access-type': 'gpon',
+        'fec_upstream_switch': 'Disable',
+        'omcc_encrypt_switch': 'On',
+        'qos_mode': 'PQ',
+        'mapping_mode': 'VLAN',
+        'tr069_management': 'disable',
+        'tr069_ip_index': '0',
+        't_conts': [4],
+    }
 ]
 
 configurations['srv_profiles'] = [
@@ -452,6 +469,54 @@ configurations['srv_profiles'] = [
                     'igmp__pri': None,
                     'max_mac_count': 'Unlimited',
                 } for _ in range(4)
+            ],
+            'iphost': [{
+                'dscp_mapping_table_index': 0,
+            }],
+            'tdm': [],
+            'moca': [],
+            'catv': [],
+        },
+        'tdm_port_type': 'E1',
+        'tdm_service_type': 'TDMoGem',
+        'mac_learning_function_switch': 'enable',
+        'ont_transparent_function_switch': 'disable',
+        'multicast_forward_mode': 'Unconcern',
+        'multicast_forward_vlan': None,
+        'multicast_mode': 'Unconcern',
+        'upstream_igmp_packet_forward_mode': 'Unconcern',
+        'upstream_igmp_packet_forward_vlan': None,
+        'upstream_igmp_packet_priority': None,
+        'native_vlan_option': 'Concern',
+        'upstream_pq_color_policy': None,
+        'downstream_pq_color_policy': None,
+    },
+    {
+        'profile_id': 500,
+        'profile_name': 'new_link',
+        'access-type': 'gpon',
+        'ont_ports': {
+            'pots': [{} for _ in range(2)],
+            'eth': [
+                {
+                    'qinqmode': 'unconcern',
+                    'prioritypolicy': 'unconcern',
+                    'inbound': 'unconcern',
+                    'outbound': 'unconcern',
+                    'dscp_mapping_table_index': 0,
+                    'service_type': 'Translation' if i == 0 else None,
+                    'index': '1' if i == 0 else None,
+                    's__vlan': 500 if i == 0 else None,
+                    's__pri': None,
+                    'c__vlan': 500 if i == 0 else None,
+                    'c__pri': None,
+                    'encap': None,
+                    's__pri_policy': None,
+                    'igmp__mode': None,
+                    'igmp__vlan': None,
+                    'igmp__pri': None,
+                    'max_mac_count': 'Unlimited',
+                } for i in range(4)
             ],
             'iphost': [{
                 'dscp_mapping_table_index': 0,
@@ -511,7 +576,28 @@ configurations["gems"] = [{
         'flow_car': '',
         'transparent': '',
     }],
+},
+{
+    'gem_id': 126,
+    'service_type': 'eth',
+    'encrypt': 'off',
+    'gem_car': '',
+    'cascade': 'off',
+    "tcont_id": 4,
+    'upstream_priority_queue': 0,
+    'downstream_priority_queue': None,
+    'mappings': [{
+        'mapping_index': 0,
+        'vlan': 500,
+        'priority': '',
+        'port_type': '',
+        'port_id': '',
+        'bundle_id': '',
+        'flow_car': '',
+        'transparent': '',
+        }],
 }]
+
 
 
 configurations['frames'][0]['slots'] = [
@@ -573,6 +659,15 @@ configurations['frames'][0]['slots'] = [
         'subtype1': '',
     }
 ]
+
+configurations["vlans"] = {
+    100: {
+        "type": "smart",
+        "attr": "common",
+    },
+}
+
+configurations["service_ports"] = {}
 
 for i in range(gpon_boards[gpon_board]):
     registered = 0
@@ -636,6 +731,63 @@ for i in range(gpon_boards[gpon_board]):
             'olt_rx_ont_power': round(random.uniform(-7, -29), 2),
             'voltage_v': round(random.uniform(3.2, 3.6), 2),
             'current_ma': random.randint(5, 9),
+            "ports": {
+                "eth": {
+                    1: {
+                        "c__vlan": None,
+                        "c__pri": 2,
+                        "eth__type": None,
+                        "vlan__type": "Translation",
+                        "s__vlan": 1,
+                        "s__pri": 7,
+                        "s__pri_policy": None,
+                        "native_vlan": 1,
+                        "default_priority": 0,
+                        "downstream_mode": "operation",
+                        "mismatch_policy": "discard",
+                    },
+                    2: {
+                        "c__vlan": 100,
+                        "c__pri": None,
+                        "eth__type": "IPoE",
+                        "vlan__type": "QINQ",
+                        "s__vlan": 20,
+                        "s__pri": 3,
+                        "s__pri_policy": "DSCP",
+                        "native_vlan": None,
+                        "default_priority": None,
+                        "downstream_mode": None,
+                        "mismatch_policy": None,
+                    },
+                    3: {
+                        "c__vlan": 1,
+                        "c__pri": None,
+                        "eth__type": None,
+                        "vlan__type": "Translation",
+                        "s__vlan": 1,
+                        "s__pri": None,
+                        "s__pri_policy": None,
+                        "native_vlan": 1,
+                        "default_priority": 0,
+                        "downstream_mode": "operation",
+                        "mismatch_policy": "discard",
+                    },
+                    4: {
+                        "c__vlan": 100,
+                        "c__pri": None,
+                        "eth__type": "0x6321",
+                        "vlan__type": "QINQ",
+                        "s__vlan": 70,
+                        "s__pri": None,
+                        "s__pri_policy": None,
+                        "native_vlan": None,
+                        "default_priority": None,
+                        "downstream_mode": None,
+                        "mismatch_policy": None,
+                    },
+                },
+            },
+            "gemports": [126],
         }
         if register:
             registered += 1

@@ -1,0 +1,30 @@
+  F/S/P: 0/3/0     ONT ID: 0                                                    
+  ------------------------------------------------------------------------------ 
+  GEM port  T-CONT  Service  Encrypt  Up  Down  Traffic                         
+   ID       ID      type              PQ  PQ    table index                     
+  ------------------------------------------------------------------------------
+  {% for gem in gems -%}
+  {{ (gem.gem_id|string).ljust(3)}} {{ (gem.tcont_id|string).ljust(3)}} {{}}
+  {% endfor -%} 
+   158       0      ETHERNET  off     -   adapt  -                              
+  ------------------------------------------------------------------------------
+  Notes: Run the display traffic table ip command to query                      
+         traffic table configuration                                            
+  ------------------------------------------------------------------------------  
+  The number of GEM ports is: {{ gems|length }}
+
+{#
+  F/S/P: 0/3/0     ONT ID: 0                                                    
+ ------------------------------------------------------------------------------ 
+  GEM port  T-CONT  Service  Encrypt  Up  Down  Traffic                         
+   ID       ID      type              PQ  PQ    table index                     
+ ------------------------------------------------------------------------------ 
+   128       1      ETHERNET  off     6   -      -                              
+   158       0      ETHERNET  off     -   adapt  -                              
+  ------------------------------------------------------------------------------
+  Notes: Run the display traffic table ip command to query                      
+         traffic table configuration                                            
+ ------------------------------------------------------------------------------  
+   The number of GEM ports is: 2 
+
+#}

@@ -1,0 +1,11 @@
+  --------------------------------------------------------------------
+  C-VLAN C-PRI ETH-type   VLAN-type   Port   Port S-VLAN S-PRI  S-PRI
+                                      type   ID                 POLICY
+  --------------------------------------------------------------------
+  {% for port in ont_ports -%}
+  {{ (port.c__vlan|string).ljust(6) }} {{ (port.c__pri or '-'|string).ljust(5) }} {{ port.eth__type.ljust(10) }} {{ port.vlan__type.ljust(11) }} {{ (port.port_type|string).ljust(6).upper() }} {{ (port.port_id|string).ljust(4) }} {{ (port.s__vlan|string).ljust(6) }} {{ ((port.s__pri if port.s__pri is not none else '-')|string).ljust(8) }} {{ port.s__pri_policy or '-' }}
+  {% endfor -%}
+  --------------------------------------------------------------------
+  Notes: IPoE indicates IPv4-IPoE, * indicates transparent attribute of
+  the vlan, In the Ethernet encapsulation list, the hexadecimal digits
+  indicate the user-defined Ethernet encapsulation type
