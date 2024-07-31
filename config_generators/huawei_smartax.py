@@ -385,7 +385,7 @@ configurations['t_conts'] = [
     {
         'tcont_id': 1,
         'dba_profile_id': 2,
-        'gems': [],
+        'gems': [1],
     },
     {
         'tcont_id': 4,

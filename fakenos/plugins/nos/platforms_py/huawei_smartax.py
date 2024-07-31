@@ -828,6 +828,13 @@ class HuaweiSmartAX(BaseDevice):
         ont["management_mode"] = "OMCI"
         ont["snmp_profile_id"] = 1
         ont["snmp_profile_name"] = "snmp-profile_1"
+        line_profile = next((line_profile for line_profile in self.configurations["line_profiles"] if line_profile["profile_id"] == ont["line_profile_id"]), None)
+        if not line_profile:
+            return "The line profile does not exist."
+        t_cont = next((t_cont for t_cont in self.configurations["t_conts"] if line_profile["t_conts"][0] == t_cont["tcont_id"]), None)
+        if not t_cont:
+            return "The T-CONT does not exist."
+        ont["gemports"] = t_cont["gems"]
         srv_profiles = self.configurations["srv_profiles"]
         srv_profile = next((srv_profile for srv_profile in srv_profiles if srv_profile["profile_id"] == ont["srv_profile_id"]), None)
         ont["ports"]["eth"] = copy.deepcopy(srv_profile['ont_ports']['eth'])
@@ -878,6 +885,7 @@ class HuaweiSmartAX(BaseDevice):
             return "The port does not exist."
         onts = self.configurations["frames"][0]["slots"][0]["ports"][port]
         onts = [ont for ont in onts if ont.get("registered")]
+        onts.sort(key=lambda ont: ont["ont_id"])
         return self.render("huawei_smartax/display_ont_snmp__profile.j2", onts=onts)
 
     def make_sysman_service(self, **kwargs):
