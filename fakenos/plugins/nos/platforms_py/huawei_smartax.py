@@ -201,7 +201,7 @@ class HuaweiSmartAX(BaseDevice):
             for ont in onts:
                 ont["f_s_p"] = port
                 ont["ont-id"] = ont["ont_id"]
-                onts.sort(key=lambda x: x["ont_id"])
+            onts.sort(key=lambda x: x["ont_id"])
             return self.render("huawei_smartax/display_ont_info_list.j2", onts=onts)
         except (IndexError, ValueError):
             return "There are no ONTs in the specified port."
