@@ -95,16 +95,16 @@
   -----------------------------------------------------------------------------
   Port-type Port-ID QinQmode  PriorityPolicy Inbound     Outbound
   -----------------------------------------------------------------------------
-  {% for eth in service_profile.ont_ports.eth -%}
-  {{ "ETH".ljust(9) }} {{ (loop.index|string).ljust(7) }} {{ eth.qinqmode.ljust(8) }} {{ eth.prioritypolicy.ljust(14) }} {{ eth.inbound.ljust(11) }} {{ eth.outbound }}
+  {% for port, values in ports.eth.items() -%}
+  {{ "ETH".ljust(9) }} {{ (port|string).ljust(7) }} {{ values.qinqmode.ljust(8) }} {{ values.prioritypolicy.ljust(14) }} {{ values.inbound.ljust(11) }} {{ values.outbound }}
   {% endfor -%}
   -----------------------------------------------------------------------------
   Notes: * indicates the discretely configured traffic profile
   -----------------------------------------------------------------------------
   Port-type Port-ID Dscp-mapping-table-index
   -----------------------------------------------------------------------------
-  {% for eth in service_profile.ont_ports.eth -%}
-  {{ "ETH".ljust(9) }} {{ (loop.index|string).ljust(7) }} {{ eth.dscp_mapping_table_index }}
+  {% for port, values in ports.eth.items() -%}
+  {{ "ETH".ljust(9) }} {{ (port|string).ljust(7) }} {{ values.dscp_mapping_table_index }}
   {% endfor -%}
   {% for iphost in service_profile.ont_ports.iphost -%}
   {{ "IPHOST".ljust(9) }} {{ (loop.index|string).ljust(7) }} {{ iphost.dscp_mapping_table_index }}
@@ -113,11 +113,9 @@
   Port   Port   Service-type Index S-VLAN S-PRI C-VLAN C-PRI ENCAP      S-PRI
   type   ID                                                             POLICY
   -----------------------------------------------------------------------------
-  {% for eth in service_profile.ont_ports.eth -%}
-    {% if eth.service_type -%}
-  {{ "ETH".ljust(6) }} {{ (loop.index|string).ljust(6) }} {{ eth.service_type.ljust(12) }} {{ (eth.index|string).ljust(5) }} {{ (eth.s__vlan|string).ljust(6) }} {{ (eth.s__pri or '-').ljust(5) }} {{ (eth.c__vlan|string).ljust(6) }} {{ (eth.c__pri or '-').ljust(5) }} {{ (eth.encap or '-').ljust(10) }} {{ (eth.s__pri_policy or '-') }}
-    {%- endif -%}
-  {% endfor %}
+  {% for port, values in ports.eth.items() -%}
+  {{ "ETH".ljust(6) }} {{ (port|string).ljust(6) }} {{ values.vlan__type.ljust(12) }} {{ (loop.index|string).ljust(5) }} {{ (values.s__vlan|string).ljust(6) }} {{ (values.s__pri|string if values.s__pri is not none else '-').ljust(5) }} {{ (values.c__vlan|string if values.c__vlan is not none else '-').ljust(6) }} {{ (values.c__pri|string if values.c__pri is not none else '-').ljust(5) }} {{ (values.encap or '-').ljust(10) }} {{ (values.s__pri_policy or '-') }}
+  {% endfor -%}
   ----------------------------------------------------------------------------- 
   Notes: * indicates transparent attribute of the vlan
   ----------------------------------------------------------------------------- 

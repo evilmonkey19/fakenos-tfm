@@ -113,113 +113,92 @@ gpon_board = random.choice(list(gpon_boards))
 configurations["memory_usage"] = 50
 configurations["cpu_usage"] = 50
 
-configurations['services'] = [
-    {
-        'service_name': 'telnet',
-        'port': 23,
-        'state': 'disable',
+configurations['services'] = {
+    "telnet": {
+        "port": 23,
+        "state": "disable",
     },
-    {
-        'service_name': 'trace',
-        'port': 1026,
-        'state': 'disable',
+    "trace": {
+        "port": 1026,
+        "state": "disable",
     },
-    {
-        'service_name': 'ssh',
-        'port': 22,
-        'state': 'enable',
+    "ssh": {
+        "port": 22,
+        "state": "enable",
     },
-    {
-        'service_name': 'snmp',
-        'port': 161,
-        'state': 'enable',
+    "snmp": {
+        "port": 161,
+        "state": "enable",
     },
-    {
-        'service_name': 'ftp-client',
-        'port': None,
-        'state': None,
+    "ftp-client": {
+        "port": None,
+        "state": None,
     },
-    {
-        'service_name': 'sftp-client',
-        'port': None,
-        'state': None,
+    "sftp-client": {
+        "port": None,
+        "state": None,
     },
-    {
-        'service_name': 'ntp',
-        'port': 123,
-        'state': 'enable',
+    "ntp": {
+        "port": 123,
+        "state": "enable",
     },
-    {
-        'service_name': 'radius',
-        'port': None,
-        'state': 'enable',
+    "radius": {
+        "port": None,
+        "state": "enable",
     },
-    {
-        'service_name': 'dhcp-relay',
-        'port': 67,
-        'state': 'disable',
+    "dhcp-relay": {
+        "port": 67,
+        "state": "disable",
     },
-    {
-        'service_name': 'dhcpv6-relay',
-        'port': 547,
-        'state': 'disable',
+    "dhcpv6-relay": {
+        "port": 547,
+        "state": "disable",
     },
-    {
-        'service_name': 'ntp6',
-        'port': 123,
-        'state': 'disable',
+    "ntp6": {
+        "port": 123,
+        "state": "disable",
     },
-    {
-        'service_name': 'ipdr',
-        'port': 4737,
-        'state': 'enable',
+    "ipdr": {
+        "port": 4737,
+        "state": "enable",
     },
-    {
-        'service_name': 'twamp',
-        'port': 862,
-        'state': 'enable',
+    "twamp": {
+        "port": 862,
+        "state": "enable",
     },
-    {
-        'service_name': 'netconf',
-        'port': 830,
-        'state': 'enable',
+    "netconf": {
+        "port": 830,
+        "state": "enable",
     },
-    {
-        'service_name': 'telnetv6',
-        'port': 23,
-        'state': 'disable',
+    "telnetv6": {
+        "port": 23,
+        "state": "disable",
     },
-    {
-        'service_name': 'sshv6',
-        'port': 22,
-        'state': 'disable',
+    "sshv6": {
+        "port": 22,
+        "state": "disable",
     },
-    {
-        'service_name': 'snmpv6',
-        'port': 161,
-        'state': 'disable',
+    "snmpv6": {
+        "port": 161,
+        "state": "disable",
     },
-    {
-        'service_name': 'web-proxy',
-        'port': 8024,
-        'state': 'disable',
+    "web-proxy": {
+        "port": 8024,
+        "state": "disable",
     },
-    {
-        'service_name': 'portal',
-        'port': 2000,
-        'state': 'disable',
+    "portal": {
+        "port": 2000,
+        "state": "disable",
     },
-    {
-        'service_name': 'capwap',
-        'port': 5246,
-        'state': 'enable',
+    "capwap": {
+        "port": 5246,
+        "state": "enable",
     },
-    {
-        'service_name': 'mqtt',
-        'port': 8883,
-        'state': 'disable',
+    "mqtt": {
+        "port": 8883,
+        "state": "disable",
     },
-]
+}
 
 configurations['alarm_policies'] = [{
     'policy_id': 0,
@@ -497,27 +476,7 @@ configurations['srv_profiles'] = [
         'access-type': 'gpon',
         'ont_ports': {
             'pots': [{} for _ in range(2)],
-            'eth': [
-                {
-                    'qinqmode': 'unconcern',
-                    'prioritypolicy': 'unconcern',
-                    'inbound': 'unconcern',
-                    'outbound': 'unconcern',
-                    'dscp_mapping_table_index': 0,
-                    'service_type': 'Translation' if i == 0 else None,
-                    'index': '1' if i == 0 else None,
-                    's__vlan': 500 if i == 0 else None,
-                    's__pri': None,
-                    'c__vlan': 500 if i == 0 else None,
-                    'c__pri': None,
-                    'encap': None,
-                    's__pri_policy': None,
-                    'igmp__mode': None,
-                    'igmp__vlan': None,
-                    'igmp__pri': None,
-                    'max_mac_count': 'Unlimited',
-                } for i in range(4)
-            ],
+            'eth':{},
             'iphost': [{
                 'dscp_mapping_table_index': 0,
             }],
@@ -541,21 +500,85 @@ configurations['srv_profiles'] = [
     }
 ]
 
-configurations['srv_profiles'][0]['ont_ports']['eth'][0].update({
-    'qinqmode': 'unconcern',
-    'prioritypolicy': 'unconcern',
-    'inbound': 'unconcern',
-    'outbound': 'unconcern',
-    'dscp_mapping_table_index': 0,
-    'service_type': 'Translation',
-    'index': 1,
-    's__vlan': 100,
-    's__pri': None,
-    'c__vlan': 100,
-    'c__pri': None,
-    'encap': None,
-    's__pri_policy': None,
-})
+configurations['srv_profiles'][1]['ont_ports']['eth'] = {
+    1: {
+        "c__vlan": None,
+        "c__pri": 2,
+        "eth__type": None,
+        "vlan__type": "Translation",
+        "s__vlan": 1,
+        "s__pri": 7,
+        "s__pri_policy": None,
+        "native_vlan": 1,
+        "default_priority": 0,
+        "downstream_mode": "operation",
+        "mismatch_policy": "discard",
+        'qinqmode': 'unconcern',
+        'prioritypolicy': 'unconcern',
+        'inbound': 'unconcern',
+        'outbound': 'unconcern',
+        'dscp_mapping_table_index': 0,
+        'encap': None,
+    },
+    2: {
+        "c__vlan": 100,
+        "c__pri": None,
+        "eth__type": "IPoE",
+        "vlan__type": "QINQ",
+        "s__vlan": 20,
+        "s__pri": 3,
+        "s__pri_policy": "DSCP",
+        "native_vlan": None,
+        "default_priority": None,
+        "downstream_mode": None,
+        "mismatch_policy": None,
+        'qinqmode': 'unconcern',
+        'prioritypolicy': 'unconcern',
+        'inbound': 'unconcern',
+        'outbound': 'unconcern',
+        'dscp_mapping_table_index': 0,
+        'encap': None,
+    },
+    3: {
+        "c__vlan": 1,
+        "c__pri": None,
+        "eth__type": None,
+        "vlan__type": "Translation",
+        "s__vlan": 1,
+        "s__pri": None,
+        "s__pri_policy": None,
+        "native_vlan": 1,
+        "default_priority": 0,
+        "downstream_mode": "operation",
+        "mismatch_policy": "discard",
+        'qinqmode': 'unconcern',
+        'prioritypolicy': 'unconcern',
+        'inbound': 'unconcern',
+        'outbound': 'unconcern',
+        'dscp_mapping_table_index': 0,
+        'encap': None,
+    },
+    4: {
+        "c__vlan": 100,
+        "c__pri": None,
+        "eth__type": "0x6321",
+        "vlan__type": "QINQ",
+        "s__vlan": 70,
+        "s__pri": None,
+        "s__pri_policy": None,
+        "native_vlan": None,
+        "default_priority": None,
+        "downstream_mode": None,
+        "mismatch_policy": None,
+        'qinqmode': 'unconcern',
+        'prioritypolicy': 'unconcern',
+        'inbound': 'unconcern',
+        'outbound': 'unconcern',
+        'dscp_mapping_table_index': 0,
+        'encap': None,
+    },
+}
+
 
 configurations["gems"] = [{
     'gem_id': 1,
@@ -745,6 +768,12 @@ for i in range(gpon_boards[gpon_board]):
                         "default_priority": 0,
                         "downstream_mode": "operation",
                         "mismatch_policy": "discard",
+                        'qinqmode': 'unconcern',
+                        'prioritypolicy': 'unconcern',
+                        'inbound': 'unconcern',
+                        'outbound': 'unconcern',
+                        'dscp_mapping_table_index': 0,
+                        'encap': None,
                     },
                     2: {
                         "c__vlan": 100,
@@ -758,6 +787,12 @@ for i in range(gpon_boards[gpon_board]):
                         "default_priority": None,
                         "downstream_mode": None,
                         "mismatch_policy": None,
+                        'qinqmode': 'unconcern',
+                        'prioritypolicy': 'unconcern',
+                        'inbound': 'unconcern',
+                        'outbound': 'unconcern',
+                        'dscp_mapping_table_index': 0,
+                        'encap': None,
                     },
                     3: {
                         "c__vlan": 1,
@@ -771,6 +806,12 @@ for i in range(gpon_boards[gpon_board]):
                         "default_priority": 0,
                         "downstream_mode": "operation",
                         "mismatch_policy": "discard",
+                        'qinqmode': 'unconcern',
+                        'prioritypolicy': 'unconcern',
+                        'inbound': 'unconcern',
+                        'outbound': 'unconcern',
+                        'dscp_mapping_table_index': 0,
+                        'encap': None,
                     },
                     4: {
                         "c__vlan": 100,
@@ -784,10 +825,18 @@ for i in range(gpon_boards[gpon_board]):
                         "default_priority": None,
                         "downstream_mode": None,
                         "mismatch_policy": None,
+                        'qinqmode': 'unconcern',
+                        'prioritypolicy': 'unconcern',
+                        'inbound': 'unconcern',
+                        'outbound': 'unconcern',
+                        'dscp_mapping_table_index': 0,
+                        'encap': None,
                     },
                 },
-            },
+            } if register else {},
             "gemports": [126],
+            "snmp_profile_id": 1,
+            "snmp_profile_name": "snmp-profile_1",
         }
         if register:
             registered += 1

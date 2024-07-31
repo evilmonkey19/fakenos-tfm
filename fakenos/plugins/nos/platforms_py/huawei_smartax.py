@@ -201,6 +201,7 @@ class HuaweiSmartAX(BaseDevice):
             for ont in onts:
                 ont["f_s_p"] = port
                 ont["ont-id"] = ont["ont_id"]
+                onts.sort(key=lambda x: x["ont_id"])
             return self.render("huawei_smartax/display_ont_info_list.j2", onts=onts)
         except (IndexError, ValueError):
             return "There are no ONTs in the specified port."
@@ -802,44 +803,96 @@ class HuaweiSmartAX(BaseDevice):
     def make_ont_add(self, **kwargs):
         """ Add an ONT to the system """
         args = kwargs.get("args", "")
-        pattern = r'^\d+ sn-auth \S{16} omci ont-lineprofile-id \d+ ont-srvprofile-id \d+ desc .{0,64}$'
+        pattern = r'^(\d+)? sn-auth (\S{16})? omci ont-lineprofile-id (\d+)? ont-srvprofile-id (\d+)? desc (.{0,64})?$'
         if not re.match(pattern, args):
             return "Invalid args format"
-        port = int(args.split(" ")[0])
-        if port not in range(GPON_BOARDS[self.configurations["frames"][0]["slots"][0]["boardname"]]):
+        ifconfig_pattern = r"^\w+\(config-if-gpon-(\d+)?\/(\d+)?\)#$"
+        chassis, board = map(int, re.match(ifconfig_pattern, kwargs["current_prompt"]).groups())
+        port, sn, line_profile_id, srv_profile_id, desc = re.match(pattern, args).groups()
+        if int(port) not in range(GPON_BOARDS[self.configurations["frames"][0]["slots"][0]["boardname"]]):
             return "The port does not exist."
-        onts_autofind_gpon, _ = self._get_onts_autofind(port_number=port)
-        ont = self._find_ont(onts_autofind_gpon, sn = args.split(" ")[2])
-        if ont:
-            onts = self.configurations["frames"][0]["slots"][0]["ports"][port]
-            ont["ont_id"] = len([ont for ont in onts if ont.get("registered")])
-            ont["registered"] = True
-            ont["line_profile_id"] = int(args.split(" ")[5])
-            ont["srv_profile_id"] = int(args.split(" ")[7])
-            ont["description"] = args.split(" ")[-1]
-            ont["control_flag"] = "active"
-            ont["run_state"] = "online"
-            ont["config_state"] = "normal"
-            ont["match_state"] = "match"
-            ont["management_mode"] = "OMCI"
-            for o in onts:
-                if o["sn"] == ont["sn"]:
-                    self.configurations["frames"][0]["slots"][0]["ports"][port][onts.index(o)] = ont
-                    break
-            return self.render("huawei_smartax/ont_add_successful.j2", port=port, ont=ont)
-        return ""
+        unregistered_onts = [ont for ont in self.configurations["frames"][chassis]["slots"][board]["ports"][int(port)] if not ont.get("registered")]
+        ont = next((ont for ont in unregistered_onts if ont["sn"] == sn), None)
+        if not ont:
+            return "The ONT does not exist."
+        onts = self.configurations["frames"][0]["slots"][0]["ports"][int(port)]
+        ont["ont_id"] = len([ont for ont in onts if ont.get("registered")])
+        ont["registered"] = True
+        ont["line_profile_id"] = int(line_profile_id)
+        ont["srv_profile_id"] = int(srv_profile_id)
+        ont["description"] = desc
+        ont["control_flag"] = "active"
+        ont["run_state"] = "online"
+        ont["config_state"] = "normal"
+        ont["match_state"] = "match"
+        ont["management_mode"] = "OMCI"
+        ont["snmp_profile_id"] = 1
+        ont["snmp_profile_name"] = "snmp-profile_1"
+        srv_profiles = self.configurations["srv_profiles"]
+        srv_profile = next((srv_profile for srv_profile in srv_profiles if srv_profile["profile_id"] == ont["srv_profile_id"]), None)
+        ont["ports"]["eth"] = copy.deepcopy(srv_profile['ont_ports']['eth'])
+        return self.render("huawei_smartax/ont_add_successful.j2", port=int(port), ont=ont)
 
         # ont add 7 sn-auth WF9UMRRY4OBSD6CK omci ont-lineprofile-id 500 ont-srvprofile-id 500 desc Hola
-
-    def _find_ont(self, onts: List[Dict], sn: str) -> Dict:
-        """ Find an ONT in the onts list """
-        return next((item for item in onts if item.get('sn') == sn), None)
+    def make_ont_delete(self, **kwargs):
+        """ Delete an ONT from the system """
+        args = kwargs.get("args", "")
+        pattern = r'^(\d+)? (\d+)?$'
+        if not re.match(pattern, args):
+            return "Invalid args format"
+        config_pattern = r"^\w+\(config-if-gpon-(\d+)?\/(\d+)?\)#$"
+        chassis, board = map(int, re.match(config_pattern, kwargs["current_prompt"]).groups())
+        port, ont_id = map(int, re.match(pattern, args).groups())
+        onts: list = self.configurations["frames"][chassis]["slots"][board]["ports"][port]
+        ont = next((ont for ont in onts if ont.get("registered") and ont["ont_id"] == ont_id), None)
+        if not ont:
+            return "The ONT does not exist."
+        ont["registered"] = False
+        ont['ont_id'] = None
+        ont['line_profile_id'] = None
+        ont['srv_profile_id'] = None
+        ont['description'] = None
+        for ont in onts:
+            if not ont["ont_id"] or ont["ont_id"] < ont_id:
+                continue
+            ont["ont_id"] -= 1
+        return self.render(
+            "huawei_smartax/ont_delete_successful.j2",
+            ont_count=1,
+            success_count=1,
+        )
 
     def make_commit(self, **kwargs):
         """ Commit the changes """
         self.configurations = copy.deepcopy(self.changing_config)
         self.changing_config = None
         return ""
+    
+    def make_display_ont_snmp_profile(self, **kwargs):
+        """ Display the ONT SNMP profile """
+        pattern = r'^(\d+)? all$'
+        if not re.match(pattern, kwargs["args"]):
+            return "Invalid args format"
+        port = int(re.match(pattern, kwargs["args"]).groups()[0])
+        if port not in range(GPON_BOARDS[self.configurations["frames"][0]["slots"][0]["boardname"]]):
+            return "The port does not exist."
+        onts = self.configurations["frames"][0]["slots"][0]["ports"][port]
+        onts = [ont for ont in onts if ont.get("registered")]
+        return self.render("huawei_smartax/display_ont_snmp__profile.j2", onts=onts)
+
+    def make_sysman_service(self, **kwargs):
+        """ Configure the system management service """
+        pattern = r'^(dhcp-relay|dhcpv6-relay|ipdr|ntp|ntp6|portal|radius|snmp|snmpv6|telnet|telnetv6|trace|twamp|netconf|capwap|mqtt)? (enable|disable)?$'
+        if not re.match(pattern, kwargs["args"]):
+            return "Invalid args format"
+        service, state = re.match(pattern, kwargs["args"]).groups()
+        services = self.configurations["services"]
+        if services[service]['state'] == state:
+            return "The service is already in that state."
+        services[service]['state'] = state
+        return ""
+        
+
 
 commands = {
     "enable": {
@@ -892,7 +945,7 @@ commands = {
     "display sysman service state": {
         "output": HuaweiSmartAX.make_display_sysman_service_state,
         "help": "It shows the state of the running services",
-        "prompt": [INITIAL_PROMPT, ENABLE_PROMPT],
+        "prompt": [INITIAL_PROMPT, ENABLE_PROMPT, CONFIG_PROMPT],
     },
     "display dba-profile": {
         "output": HuaweiSmartAX.make_display_dba__profile,
@@ -1019,10 +1072,28 @@ commands = {
         "help": "Add an ONT",
         "prompt": CONFIG_IF_GPON,
     },
+    "ont delete": {
+        "output": HuaweiSmartAX.make_ont_delete,
+        "regex": "ont delete \\S+",
+        "help": "Delete an ONT",
+        "prompt": CONFIG_IF_GPON,
+    },
     "display ont-lineprofile": {
         "output": HuaweiSmartAX.make_display_ont__lineprofile,
         "regex": "di[[splay]] ont-lineprof[[ile]] \\S+",
         "help": "Display the ONT line profile",
+        "prompt": [CONFIG_PROMPT]
+    },
+    "display ont snmp-profile": {
+        "output": HuaweiSmartAX.make_display_ont_snmp_profile,
+        "regex": "di[[splay]] ont snmp-prof[[ile]] \\S+",
+        "help": "Display the ONT SNMP profile",
+        "prompt": [CONFIG_IF_GPON]
+    },
+    "sysman service": {
+        "output": HuaweiSmartAX.make_sysman_service,
+        "regex": "sysman serv[[ice]] \\S+",
+        "help": "Configure the system management service",
         "prompt": [CONFIG_PROMPT]
     }
 }

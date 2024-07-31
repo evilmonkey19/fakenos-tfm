@@ -1,0 +1,7 @@
+  --------------------------------------------------------------------
+  ONT ID     SNMP profile ID     SNMP profile name
+  --------------------------------------------------------------------
+  {% for ont in onts -%}
+  {{ (ont.ont_id|string).rjust(6) }}         {{ (ont.snmp_profile_id|string).center(11) }}     {{ ont.snmp_profile_name}}
+  {% endfor -%}
+  --------------------------------------------------------------------

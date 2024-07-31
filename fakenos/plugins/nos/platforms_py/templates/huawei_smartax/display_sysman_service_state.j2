@@ -1,7 +1,7 @@
   ---------------------------------------------------------------------------
   Network service                                   Port           State
   ---------------------------------------------------------------------------
-  {% for service in services -%}
-  {{ service.service_name.ljust(49) }} {{ ((service.port or '----')|string).ljust(14) }} {{ service.state or '----' }}
+  {% for service, info in services.items() -%}
+  {{ service.ljust(49) }} {{ ((info.port or '----')|string).ljust(14) }} {{ info.state or '----' }}
   {% endfor -%}
   ---------------------------------------------------------------------------

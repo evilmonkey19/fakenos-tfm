@@ -2,7 +2,7 @@
   Port   Port C-VLAN C-PRI ETH-type   VLAN-type   S-VLAN S-PRI  S-PRI
   type   ID                                                     POLICY
   --------------------------------------------------------------------
-  {{ ont_ports.port_type.ljust(6) }} {{ ont_ports.port_id.ljust(4) }} {{ (ont_ports.c__vlan|string if ont_ports.c__vlan is not none else '-').ljust(6) }} {{ (ont_ports.c__pri|string or '-').ljust(5) }} {{ (ont_ports.eth__type or '-').ljust(10) }} {{ (ont_ports.vlan__type or '-').ljust(11) }} {{ (ont_ports.s__vlan|string or '-').ljust(6) }} {{ (ont_ports.s__pri|string or '-').ljust(6) }} {{ (ont_ports.s__pri_policy or '-').ljust(6) }} 
+  {{ ont_ports.port_type.ljust(6) }} {{ ont_ports.port_id.ljust(4) }} {{ (ont_ports.c__vlan|string if ont_ports.c__vlan is not none else '-').ljust(6) }} {{ (ont_ports.c__pri|string if ont_ports.c__pri is not none else '-').ljust(5) }} {{ (ont_ports.eth__type or '-').ljust(10) }} {{ (ont_ports.vlan__type or '-').ljust(11) }} {{ (ont_ports.s__vlan|string or '-').ljust(6) }} {{ (ont_ports.s__pri|string if ont_ports.s__pri is not none else '-').ljust(6) }} {{ (ont_ports.s__pri_policy or '-').ljust(6) }} 
   --------------------------------------------------------------------
   Native VLAN     : {{ ont_ports.native_vlan|string }}
   Default priority: {{ ont_ports.default_priority|string }}
