@@ -844,5 +844,10 @@ for i in range(gpon_boards[gpon_board]):
     configurations['frames'][0]['slots'][0]['ports'].append(onts)
 
 
-with open('huawei_smartax.yaml.j2', 'w', encoding='utf-8') as f:
-    f.write(yaml.dump(configurations))
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) < 2:
+        print("Usage: python huawei_smartax.py <output_file>")
+        sys.exit(1)
+    with open(sys.argv[1], 'w', encoding='utf-8') as f:
+        f.write(yaml.dump(configurations))
